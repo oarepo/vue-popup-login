@@ -1,13 +1,10 @@
 {
-  "name": "oarepo-ui-vue",
+  "name": "vue-popup-login",
   "version": "1.0.0",
   "main": "src/index.js",
   "license": "MIT",
   "dependencies": {
     "eslint-config-airbnb-base": "^13.1.0",
-    "sanitize-html": "^1.20.0",
-    "vue-class-component": "^6.3.2",
-    "vue-property-decorator": "^7.3.0",
     "vuex-class-modules": "^1.0.0"
   },
   "devDependencies": {

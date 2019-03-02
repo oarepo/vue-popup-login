@@ -1,30 +1,33 @@
-import OARepoCollectionList from './components/OARepoCollectionList.vue';
-import OARepoCollection from './components/OARepoCollection.vue';
-import OARepoCollectionItem from './components/OARepoCollectionItem.vue';
-import OARepoFacetList from './components/OARepoFacetList.vue';
+import AuthModule from './store/auth_export';
 
-import Query from './services/query';
-import { CollectionListModule, CollectionModule, CollectionItemModule } from './store/collections_export';
+import LoginPopupSupport from './services/login_popup_support';
 
-// Export components individually
-export {
-    OARepoCollection,
-    OARepoCollectionItem,
-    OARepoCollectionList,
-    OARepoFacetList,
-    Query,
-    CollectionListModule,
-    CollectionModule,
-    CollectionItemModule,
+
+const PopupAuthModule = {
+    install(Vue, {
+        store,
+        app,
+        authStateURL,
+        authLoginURL,
+    }) {
+
+        Vue.use(LoginPopupSupport, { app, loginURL: authLoginURL });
+
+        const authModule = new AuthModule({
+            store,
+            name: 'auth',
+        });
+
+        authModule.setAuthStateURL(authStateURL);
+
+        Vue.prototype.auth$ = authModule;
+
+        Vue.prototype.loginPopup$.addListener(authModule.getLoginState, false);
+    },
 };
 
-// What should happen if the user installs the library as a plugin
-function install(Vue) {
-    Vue.component('oarepo-collection-list', OARepoCollectionList);
-    Vue.component('oarepo-collection', OARepoCollection);
-    Vue.component('oarepo-collection-item', OARepoCollectionItem);
-    Vue.component('oarepo-facet-list', OARepoFacetList);
-}
+export {
+    LoginPopupSupport,
+};
 
-// Export the library as a plugin
-export default install;
+export default PopupAuthModule;

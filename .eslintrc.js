@@ -55,5 +55,6 @@ module.exports = {
         'max-len': ['warn', 140],
         'no-underscore-dangle': ['off'],
         'class-methods-use-this': ['off'],
+        'padded-blocks': ['off'],
     }
 };
