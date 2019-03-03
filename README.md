@@ -186,5 +186,5 @@ iframeCreator(loginPageURL)
 ```
 
 When the iframe creator is set, no popup is created and the login will be performed
-via this iframe. Note that not all backends (such as shibboleth) support logging
-in iframes by default.
+via this iframe. Note that login backends must allow for iframe embedding - google
+`X-Frame-Options` for details.
