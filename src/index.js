@@ -10,9 +10,10 @@ const PopupAuthModule = {
         authLoginURL,
         authLogoutURL,
         popupBlockedCallback,
+        iframeCreator,
     }) {
 
-        Vue.use(LoginPopupSupport, { popupBlockedCallback, loginURL: authLoginURL });
+        Vue.use(LoginPopupSupport, { popupBlockedCallback, iframeCreator, loginURL: authLoginURL });
 
         const authModule = new AuthModule({
             store,

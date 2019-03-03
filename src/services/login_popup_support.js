@@ -1,12 +1,13 @@
 class LoginPopupSupport {
 
-    constructor(loginURL, popupBlockedCallback) {
-        this._window = null;
-        this._timeout = null;
+    constructor(loginURL, popupBlockedCallback, iframeCreator) {
+        this._windowCloser = null;
+        this._windowCheckInterval = null;
         this._singleShotLoginFinishedListener = [];
         this._loginFinishedListener = [];
         this.loginURL = loginURL;
         this.popupBlockedCallback = popupBlockedCallback;
+        this.iframeCreator = iframeCreator;
 
         // listen on window messages
         window.addEventListener('message', (ev) => {
@@ -18,8 +19,8 @@ class LoginPopupSupport {
         });
     }
 
-    static install(Vue, { loginURL, popupBlockedCallback }) {
-        const inst = new LoginPopupSupport(loginURL, popupBlockedCallback);
+    static install(Vue, { loginURL, popupBlockedCallback, iframeCreator }) {
+        const inst = new LoginPopupSupport(loginURL, popupBlockedCallback, iframeCreator);
         Vue.prototype.loginPopup$ = inst;
     }
 
@@ -44,19 +45,20 @@ class LoginPopupSupport {
         this._singleShotLoginFinishedListener = [];
         this._sendEvent(_resolve, { receivedLoginMessage });
 
-        if (this._timeout) {
-            clearTimeout(this._timeout);
-            this._timeout = null;
+        if (this._windowCheckInterval) {
+            clearTimeout(this._windowCheckInterval);
+            this._windowCheckInterval = null;
         }
 
-        console.log('login finished, window', this._window);
-        if (this._window) {
+        console.log('login finished');
+        if (this._windowCloser) {
             try {
                 // if there is still the popup window, close it
-                this._window.close();
+                this._windowCloser();
             } catch (e) {
                 console.error(e);
             }
+            this._windowCloser = null;
             this._window = null;
         }
     }
@@ -79,28 +81,37 @@ class LoginPopupSupport {
     }
 
     _createLoginWindow() {
-        // create the login popup
-        this._window = window.open(this.loginURL, '_blank'); /* , 'width=500,height=500'); */
-        if (!this._window) {
-            console.log('Login popup blocked');
-            if (this.popupBlockedCallback) {
-                this.popupBlockedCallback();
-            }
-            this._loginFinished(false);
-            return;
-        }
-        // listen for window being closed and when this happens finish the login process
-        this._timeout = setInterval(() => {
-            if (this._window.closed) {
+        if (this.iframeCreator) {
+            this._windowCloser = this.iframeCreator(this.loginURL);
+        } else {
+            // create the login popup
+            const _window = window.open(this.loginURL, '_blank'); /* , 'width=500,height=500'); */
+
+            if (!_window) {
+                console.log('Login popup blocked');
+                if (this.popupBlockedCallback) {
+                    this.popupBlockedCallback();
+                }
                 this._loginFinished(false);
+                return;
             }
-        }, 200);
+            this._windowCloser = () => {
+                _window.close();
+            };
+
+            // listen for window being closed and when this happens finish the login process
+            this._windowCheckInterval = setInterval(() => {
+                if (_window.closed) {
+                    this._loginFinished(false);
+                }
+            }, 200);
+        }
     }
 
     async waitForLogin() {
         return new Promise((resolve) => { // , reject
             this._singleShotLoginFinishedListener.push(resolve);
-            if (!this._window) {
+            if (!this._windowCloser) {
                 this._createLoginWindow();
             }
         });
