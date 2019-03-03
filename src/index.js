@@ -6,13 +6,13 @@ import LoginPopupSupport from './services/login_popup_support';
 const PopupAuthModule = {
     install(Vue, {
         store,
-        app,
         authStateURL,
         authLoginURL,
         authLogoutURL,
+        popupBlockedCallback,
     }) {
 
-        Vue.use(LoginPopupSupport, { app, loginURL: authLoginURL });
+        Vue.use(LoginPopupSupport, { popupBlockedCallback, loginURL: authLoginURL });
 
         const authModule = new AuthModule({
             store,

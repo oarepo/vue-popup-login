@@ -1,26 +1,25 @@
 class LoginPopupSupport {
 
-    constructor(loginURL) {
+    constructor(loginURL, popupBlockedCallback) {
         this._window = null;
         this._timeout = null;
-        this.vue = null;
         this._singleShotLoginFinishedListener = [];
         this._loginFinishedListener = [];
         this.loginURL = loginURL;
+        this.popupBlockedCallback = popupBlockedCallback;
 
         // listen on window messages
         window.addEventListener('message', (ev) => {
             // if the message means finishing openid login in popup
-            if (ev.data === 'openid-login-finished') {
+            if (ev.data === 'popup-login-finished') {
                 console.log('Login message received');
                 this._loginFinished(true);
             }
         });
     }
 
-    static install(Vue, { loginURL, app }) {
-        const inst = new LoginPopupSupport(loginURL);
-        inst.vue = app;
+    static install(Vue, { loginURL, popupBlockedCallback }) {
+        const inst = new LoginPopupSupport(loginURL, popupBlockedCallback);
         Vue.prototype.loginPopup$ = inst;
     }
 
@@ -83,14 +82,13 @@ class LoginPopupSupport {
         // create the login popup
         this._window = window.open(this.loginURL, '_blank'); /* , 'width=500,height=500'); */
         if (!this._window) {
-            console.log(this.vue);
-            this.vue.notify$({
-                message: 'Please do not block login popup window on this page',
-            });
+            console.log('Login popup blocked');
+            if (this.popupBlockedCallback) {
+                this.popupBlockedCallback();
+            }
             this._loginFinished(false);
             return;
         }
-
         // listen for window being closed and when this happens finish the login process
         this._timeout = setInterval(() => {
             if (this._window.closed) {
