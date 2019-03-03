@@ -22,6 +22,8 @@ class AuthModule extends VuexModule {
 
     authStateURL = null;
 
+    authLogoutURL = null;
+
     @Mutation
     setAuthInfo(authInfo) {
         this.authInfo = authInfo;
@@ -35,6 +37,11 @@ class AuthModule extends VuexModule {
     @Mutation
     setAuthStateURL(authStateURL) {
         this.authStateURL = authStateURL;
+    }
+
+    @Mutation
+    setAuthLogoutURL(authLogoutURL) {
+        this.authLogoutURL = authLogoutURL;
     }
 
     get loaded() {

@@ -9,6 +9,7 @@ const PopupAuthModule = {
         app,
         authStateURL,
         authLoginURL,
+        authLogoutURL,
     }) {
 
         Vue.use(LoginPopupSupport, { app, loginURL: authLoginURL });
@@ -19,6 +20,7 @@ const PopupAuthModule = {
         });
 
         authModule.setAuthStateURL(authStateURL);
+        authModule.setAuthLogoutURL(authLogoutURL);
 
         Vue.prototype.auth$ = authModule;
 
