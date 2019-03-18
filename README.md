@@ -64,7 +64,7 @@ class Layout extends Vue {
 ## Configuration
 
 ```javascript
-import PopupAuthModule from '@CESNET/vue-popup-login';
+import PopupAuthModule from '@oarepo/vue-popup-login';
 
 let apiURL = "/api/1.0/";
 
