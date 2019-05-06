@@ -26,6 +26,8 @@ const PopupAuthModule = {
         Vue.prototype.auth$ = authModule;
 
         Vue.prototype.loginPopup$.addListener(authModule.getLoginState, false);
+
+        this.store = authModule;
     },
 };
 
