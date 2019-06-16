@@ -1,5 +1,10 @@
 # Popup Login in VueJS
 
+[![NPM version][npm-svg]][npm]
+
+   [npm]: https://www.npmjs.com/package/@oarepo/vue-popup-login
+   [npm-svg]: https://img.shields.io/npm/v/@oarepo/vue-popup-login.svg?style=flat
+ 
 A simple package adding generic log-in process in a popup window.
 This allows for finishing any 3rd party login (such as oath) without
 reloading the application.
