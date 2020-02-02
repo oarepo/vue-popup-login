@@ -1,108 +1,102 @@
-import {
-    Action,
-    Module,
-    Mutation,
-    VuexModule,
-} from 'vuex-class-modules';
-import axios from 'axios';
+import { Action, Mutation, VuexModule } from 'vuex-class-modules'
+import axios from 'axios'
 
 const State = {
     INVALID: 0,
     LOADING: 1,
-    LOADED: 2,
-};
+    LOADED: 2
+}
 
-@Module
 class AuthModule extends VuexModule {
     // state
-    authInfo = {};
+    authInfo = {}
 
     // loading state
-    state = State.INVALID;
+    state = State.INVALID
 
-    authStateURL = null;
+    authStateURL = null
 
-    authLogoutURL = null;
-
-    @Mutation
-    setAuthInfo(authInfo) {
-        this.authInfo = authInfo;
-    }
+    authLogoutURL = null
 
     @Mutation
-    setState(state) {
-        this.state = state;
+    setAuthInfo (authInfo) {
+        this.authInfo = authInfo
     }
 
     @Mutation
-    setAuthStateURL(authStateURL) {
-        this.authStateURL = authStateURL;
+    setState (state) {
+        this.state = state
     }
 
     @Mutation
-    setAuthLogoutURL(authLogoutURL) {
-        this.authLogoutURL = authLogoutURL;
+    setAuthStateURL (authStateURL) {
+        this.authStateURL = authStateURL
     }
 
-    get loaded() {
-        return this.state === State.LOADED;
+    @Mutation
+    setAuthLogoutURL (authLogoutURL) {
+        this.authLogoutURL = authLogoutURL
     }
 
-    get loggedLocally() {
-        return this.loaded && this.authInfo.logged_in;
+    get loaded () {
+        return this.state === State.LOADED
+    }
+
+    get loggedLocally () {
+        return this.loaded && this.authInfo.logged_in
     }
 
     @Action
-    async loggedIn(force = false, ensureLoggedIn = false) {
+    async loggedIn (force = false, ensureLoggedIn = false) {
         if (force || !this.loaded || (ensureLoggedIn && !this.loggedLocally)) {
-            return this.login(ensureLoggedIn);
+            return this.login(ensureLoggedIn)
         }
-        return this.authInfo.logged_in;
+        return this.authInfo.logged_in
     }
 
     @Action
-    async getLoginState() {
+    async getLoginState () {
         // eslint-disable-next-line no-await-in-loop
-        const response = await axios.get(this.authStateURL);
+        const response = await axios.get(this.authStateURL)
 
         // if logged in, just return login data to be set by mutation action
         if (response.data.logged_in) {
-            this.setAuthInfo(response.data);
-            this.setState(State.LOADED);
+            this.setAuthInfo(response.data)
+            this.setState(State.LOADED)
         }
 
-        return this.loggedLocally;
+        return this.loggedLocally
     }
 
     @Action
-    async performLogIn(vue) {
+    async performLogIn (vue) {
         // set state as loading
-        this.setState(State.LOADING);
+        this.setState(State.LOADING)
 
         // show the login popup and wait for the it (success or canceled)
-        await vue.loginPopup$.waitForLogin();
+        await vue.loginPopup$.waitForLogin()
 
-        return this.loggedLocally;
+        return this.loggedLocally
     }
 
     @Action
-    async login(vue, ensureLoggedIn = true) {
+    async login (vue, ensureLoggedIn = true) {
 
-        this.setState(State.LOADING);
-        const response = await axios.get(this.authStateURL);
-        this.setAuthInfo(response.data);
-        this.setState(State.LOADED);
+        this.setState(State.LOADING)
+        const response = await axios.get(this.authStateURL)
+        this.setAuthInfo(response.data)
+        this.setState(State.LOADED)
 
         if (this.loggedLocally) {
-            return true;
+            return true
         }
 
         if (!ensureLoggedIn) {
-            return null;
+            return null
         }
 
-        return this.performLogIn(vue);
+        return this.performLogIn(vue)
     }
 }
 
-export default AuthModule;
+export default AuthModule

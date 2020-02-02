@@ -8,14 +8,14 @@ module.exports = {
 
     env: {
         browser: true,
-        "cypress/globals": true
+        'cypress/globals': true
     },
 
     // https://github.com/vuejs/eslint-plugin-vue#priority-a-essential-error-prevention
     // consider switching to `plugin:vue/strongly-recommended` or `plugin:vue/recommended` for stricter rules.
     extends: [
         'plugin:vue/essential',
-        'airbnb-base'
+        '@vue/standard'
     ],
 
     // required to lint *.vue files
@@ -28,8 +28,8 @@ module.exports = {
         'ga': true, // Google Analytics
         'cordova': true,
         '__statics': true,
-        "cy": false,
-        "Cypress": false
+        'cy': false,
+        'Cypress': false
     },
 
     // add your custom rules here
@@ -55,6 +55,6 @@ module.exports = {
         'max-len': ['warn', 140],
         'no-underscore-dangle': ['off'],
         'class-methods-use-this': ['off'],
-        'padded-blocks': ['off'],
+        'padded-blocks': ['off']
     }
-};
+}
