@@ -16,7 +16,6 @@ const PopupAuthModule = {
 
         Vue.use(LoginPopupSupport, { popupBlockedCallback, iframeCreator, loginURL: authLoginURL })
         const module = Module(storeModule)
-        console.log(storeModule, module)
         // eslint-disable-next-line
         const authModule = new module({
             store,

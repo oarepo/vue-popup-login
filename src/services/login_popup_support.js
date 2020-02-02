@@ -13,7 +13,6 @@ class LoginPopupSupport {
         window.addEventListener('message', (ev) => {
             // if the message means finishing openid login in popup
             if (ev.data === 'popup-login-finished') {
-                console.log('Login message received')
                 this._loginFinished(true)
             }
         })
@@ -50,7 +49,6 @@ class LoginPopupSupport {
             this._windowCheckInterval = null
         }
 
-        console.log('login finished')
         if (this._windowCloser) {
             try {
                 // if there is still the popup window, close it
@@ -88,7 +86,7 @@ class LoginPopupSupport {
             const _window = window.open(this.loginURL, '_blank') /* , 'width=500,height=500'); */
 
             if (!_window) {
-                console.log('Login popup blocked')
+                console.error('Login popup blocked')
                 if (this.popupBlockedCallback) {
                     this.popupBlockedCallback()
                 }
