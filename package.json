@@ -48,7 +48,7 @@
     "eslint": "^5.14.0",
     "eslint-plugin-cypress": "^2.2.0",
     "eslint-plugin-import": "^2.16.0",
-    "eslint-plugin-vue": "^5.2.2",
+    "eslint-plugin-vue": "^6.2.1",
     "rollup-plugin-vue": "^5.0.0",
     "vue-template-compiler": "^2.6.10"
   }
