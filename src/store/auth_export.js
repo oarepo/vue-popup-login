@@ -47,9 +47,9 @@ class AuthModule extends VuexModule {
     }
 
     @Action
-    async loggedIn (force = false, ensureLoggedIn = false) {
+    async loggedIn ({ vue = null, force = false, ensureLoggedIn = false }) {
         if (force || !this.loaded || (ensureLoggedIn && !this.loggedLocally)) {
-            return this.login(ensureLoggedIn)
+            return this.login({ vue: vue, ensureLoggedIn: ensureLoggedIn })
         }
         return this.authInfo.logged_in
     }
@@ -80,8 +80,7 @@ class AuthModule extends VuexModule {
     }
 
     @Action
-    async login (vue, ensureLoggedIn = true) {
-
+    async login ({ vue = null, ensureLoggedIn = true }) {
         this.setState(State.LOADING)
         const response = await axios.get(this.authStateURL)
         this.setAuthInfo(response.data)
