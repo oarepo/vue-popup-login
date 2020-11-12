@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    //"downlevelIteration": true,
+    "target": "es2017",
+    "module": "esnext",
+    "strict": true,
+    "jsx": "preserve",
+    "importHelpers": true,
+    "moduleResolution": "node",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "types": [
+      "webpack-env",
+      "jest"
+    ],
+    "paths": {
+      "@oarepo/vue-composition-popup-login": [
+        "."
+      ]
+    },
+    "lib": [
+      "esnext",
+      "dom",
+      "dom.iterable",
+      "scripthost"
+    ]
+  },
+  "include": [
+    "./*.ts",
+    "./**/*.vue"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

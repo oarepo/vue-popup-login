@@ -1,55 +1,53 @@
 {
   "name": "@oarepo/vue-popup-login",
-  "version": "1.2.0",
-  "main": "index.esm.js",
-  "license": "MIT",
-  "description": "Popup Login Module for Vue",
+  "version": "2.0.0",
+  "private": false,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "rm -rf dist; bili --plugins.vue --format esm && cp package.json dist/"
+    "serve": "vue-cli-service serve",
+    "demobuild": "vue-cli-service build",
+    "build": "rimraf dist; cd library; bili -c bili.config.js --plugins.vue && copyfiles package.json README.md dist/",
+    "toc": "markdown-toc --maxdepth 4 -i README.md",
+    "test:unit": "vue-cli-service test:unit",
+    "lint": "vue-cli-service lint"
   },
-  "peerDependencies": {
-    "@babel/plugin-proposal-decorators": "^7.3.0",
-    "axios": "^0.19.0",
-    "eslint-config-airbnb-base": "^13.1.0",
-    "vuex-class-modules": "^1.0.0"
+  "dependencies": {
+    "@types/lodash": "^4.14.165",
+    "@vue/composition-api": "^1.0.0-beta.19",
+    "axios": "^0.21.0",
+    "lodash": "^4.17.20",
+    "qs": "^6.9.4",
+    "vue": "^2.6.11",
+    "vue-router": "^3.2.0"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/oarepo/vue-popup-login.git"
-  },
-  "keywords": [
-    "vuejs",
-    "login",
-    "popup",
-    "vuex",
-    "module"
-  ],
-  "author": "Miroslav Simek, CIS UCT Prague",
-  "bugs": {
-    "url": "https://github.com/oarepo/vue-popup-login/issues"
-  },
-  "directories": {
-    "test": "tests"
-  },
-  "homepage": "https://github.com/oarepo/vue-popup-login#readme",
   "devDependencies": {
-    "@babel/cli": "^7.2.3",
-    "@babel/core": "^7.3.4",
-    "@babel/plugin-proposal-class-properties": "^7.3.4",
-    "@babel/plugin-proposal-decorators": "^7.4.4",
-    "@babel/preset-env": "^7.3.4",
-    "@vue/eslint-config-prettier": "^4.0.1",
-    "@vue/eslint-config-standard": "^4.0.0",
-    "babel-eslint": "^10.0.1",
-    "babel-plugin-syntax-dynamic-import": "^6.18.0",
-    "babel-preset-vue": "^2.0.2",
-    "bili": "^4.8.0",
-    "eslint": "^5.14.0",
-    "eslint-plugin-cypress": "^2.2.0",
-    "eslint-plugin-import": "^2.16.0",
-    "eslint-plugin-vue": "^5.2.2",
+    "vuetify": "^2.2.11",
+    "roboto-fontface": "*",
+    "core-js": "^3.6.5",
+    "@mdi/font": "^3.6.95",
+    "@types/jest": "^24.0.19",
+    "@typescript-eslint/eslint-plugin": "^2.33.0",
+    "@typescript-eslint/parser": "^2.33.0",
+    "@vue/cli-plugin-babel": "~4.5.0",
+    "@vue/cli-plugin-eslint": "~4.5.0",
+    "@vue/cli-plugin-router": "~4.5.0",
+    "@vue/cli-plugin-typescript": "~4.5.0",
+    "@vue/cli-plugin-unit-jest": "~4.5.0",
+    "@vue/cli-service": "~4.5.0",
+    "@vue/eslint-config-typescript": "^5.0.2",
+    "@vue/test-utils": "^1.0.3",
+    "babel-plugin-module-resolver": "^4.0.0",
+    "bili": "^5.0.5",
+    "copyfiles": "^2.4.0",
+    "eslint": "^6.7.2",
+    "eslint-plugin-vue": "^6.2.2",
+    "json-server": "^0.16.2",
+    "markdown-toc": "^1.2.0",
+    "rimraf": "^3.0.2",
+    "rollup-plugin-babel": "^4.4.0",
+    "rollup-plugin-typescript2": "^0.29.0",
     "rollup-plugin-vue": "^5.0.0",
-    "vue-template-compiler": "^2.6.10"
+    "typescript": "~3.9.3",
+    "vue-cli-plugin-vuetify": "~2.0.7",
+    "vue-template-compiler": "^2.6.11"
   }
 }
