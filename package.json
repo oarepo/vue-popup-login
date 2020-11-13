@@ -20,7 +20,7 @@
     "vue-router": "^3.2.0"
   },
   "devDependencies": {
-    "vuetify": "^2.2.11",
+    "vuetify": "^2.3.17",
     "roboto-fontface": "*",
     "core-js": "^3.6.5",
     "@mdi/font": "^3.6.95",
