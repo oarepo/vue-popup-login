@@ -23,7 +23,7 @@
     "vuetify": "^2.2.11",
     "roboto-fontface": "*",
     "core-js": "^3.6.5",
-    "@mdi/font": "^3.6.95",
+    "@mdi/font": "^5.8.55",
     "@types/jest": "^24.0.19",
     "@typescript-eslint/eslint-plugin": "^2.33.0",
     "@typescript-eslint/parser": "^2.33.0",
