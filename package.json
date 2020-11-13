@@ -39,7 +39,7 @@
     "bili": "^5.0.5",
     "copyfiles": "^2.4.0",
     "eslint": "^6.7.2",
-    "eslint-plugin-vue": "^6.2.2",
+    "eslint-plugin-vue": "^7.1.0",
     "json-server": "^0.16.2",
     "markdown-toc": "^1.2.0",
     "rimraf": "^3.0.2",
