@@ -469,39 +469,43 @@ this.$auth.hasAccess(needsRequired, extra)
 The exact implementation of the popup failed
 handler depends on the framework you are using.
 
-For example, in quasar you can use ``BottomSheet`` plugin:
+For example, in quasar you can use ``BottomSheet`` plugin (set it inside App's setup to make sure everything is loaded):
 
 ```javascript
-api.options.popupFailedNotifier = function () {
-      return new Promise((resolve) => {
-        BottomSheet.create({
-          message: 'Could not log you in because your browser prevents popup windows',
-          actions: [
-            {
-              label: 'Try again',
-              icon: 'vpn_key',
-              id: 'again'
-            },
-            {
-              label: 'Leave this page and log in via your login server',
-              icon: 'login',
-              id: 'redirect'
-            }]
-        }).onOk(action => {
-          resolve(action === 'redirect')
-        })
-      })
-    }
+api.options.popupFailedHandler = function () {
+  return new Promise((resolve) => {
+    BottomSheet.create({
+      message: 'Could not log you in because your browser prevents popup windows',
+      actions: [
+        {
+          label: 'Try again',
+          icon: 'vpn_key',
+          id: 'again'
+        },
+        {
+          label: 'Leave this page and log in via your login server',
+          icon: 'login',
+          id: 'redirect'
+        }]
+    }).onOk(action => {
+      if (action === 'again') {
+        resolve(api.login())
+      } else {
+        resolve(REDIRECT_LOGIN)
+      }
+    })
+  })
+}
 ```
 
 See [App.vue](src/App.vue) for Vuetify example.
 
 ### Implementing login required handler
 
-Again depends on the framework. In quasar:
+Again depends on the framework. In quasar (set it inside App's setup to make sure everything is loaded):
 
 ```javascript
-api.options.loginRequiredNotifier = function () {
+api.options.loginRequiredHandler = function () {
   return new Promise((resolve) => {
     BottomSheet.create({
       message: 'Authentication required. Click on the button below to log in.',
@@ -511,8 +515,7 @@ api.options.loginRequiredNotifier = function () {
         id: 'log in'
       }]
     }).onOk(() => {
-      api.login()
-      resolve(true)
+      resolve(api.login())
     })
   })
 }
