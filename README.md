@@ -28,18 +28,18 @@ the upcoming 3.x version will be compatible with Vue 3.
   * [``redirectionCompleteUrl``](#redirectioncompleteurl)
   * [``stateUrl``](#stateurl)
   * [``loginStateTransformer``](#loginstatetransformer)
-  * [``popupFailedNotifier``](#popupfailednotifier)
-  * [``loginRequiredNotifier``](#loginrequirednotifier)
-  * [noAccessNotifier](#noaccessnotifier)
+  * [``popupFailedHandler``](#popupfailedhandler)
+  * [``loginRequiredHandler``](#loginrequiredhandler)
+  * [noAccessHandler](#noaccesshandler)
 - [Access rights](#access-rights)
 - [Usage](#usage)
   * [Login/logout button](#loginlogout-button)
   * [Routes](#routes)
   * [Hiding links with no access](#hiding-links-with-no-access)
   * [Programmatically checking if user has access rights](#programmatically-checking-if-user-has-access-rights)
-  * [Implementing popup failed notifier](#implementing-popup-failed-notifier)
-  * [Implementing login required notifier](#implementing-login-required-notifier)
-  * [Implementing no access notifier](#implementing-no-access-notifier)
+  * [Implementing popup failed handler](#implementing-popup-failed-handler)
+  * [Implementing login required handler](#implementing-login-required-handler)
+  * [Implementing no access handler](#implementing-no-access-handler)
 
 <!-- tocstop -->
 
@@ -77,51 +77,58 @@ or via composition style:
 }
 ```
 
-When a user clicks on a "login" button, the application calls 
+When a user clicks on a "login" button, the application should call 
 ``this.$auth.login() / api.login()``. This call should be made
 preferably in a synchronous method and not in setTimeout or delayed tasks
-(doing so might prevent the popup in firefox and add blockers).
+(doing so might prevent the popup in firefox and with some add blockers).
 
 The process follows as:
 
   * User clicks 'login' button
-  * App calls ``api.login()``. The result of the call is a promise for which
-    the application might listen to
-  * The library checks if the user is logged in on the server. If yes,
-    the state is synchronized and login finishes.
+  * App calls ``api.login()``. The result of the call is a boolean promise (true meaning logged in)
+  * The library checks if the user is logged in on the server. If yes, the state is synchronized 
+    and login finishes.
   * The library opens a popup window, passing it a `loginUrl?next=completeUrl`
-  * `loginUrl`, mostly implemented by a server is responsible for the login process
+  * `loginUrl`, in most cases implemented by the server, is responsible for the login process
   * When the login process is finished, `completeUrl` is called
-  * The completion page is responsible for passing the login state back (see details below)
-  * The library receives the information, closes the window and resolves the promise 
+  * The completion page is responsible for notifying the application that login has finished (see details below)
+  * The library receives the information and closes the window
+  * The library checks on the server that the user has indeed logged in  
+  * finally the login promise is resolved and application continues  
 
 What can go wrong:
   
-  * Popup can not be created (for example an over-eager add-blocker) forbids the popup. 
-    Application might define a ``popupFailedNotifier`` whose
-    responsibility is to inform that this happened and give user
-    the opportunity to either repeat the login (if the issue has been fixed)
-    or log in via redirection. This works as follows:
-
-      * The current window is redirected to  `loginUrl?next=completeUrl` as 
-        in the previous case
-      * When the login process is finished, `completeUrl` is called. This is
-        always in the form of `completeUrl?next=<vue page where the login started>`.
-        If this argument is present, the page should not perform channel-based
-        notification (as there is no opener that should be notified) but
-        should redirect browser to the target page
-      * The vue page is loaded and should call (for example in App or route
-        guard)  ``api.check()`` that synchronizes the logging state in Vue app
-        with that on the server
+  * The popup window could not be created - for example browser setting forbids the popup. 
+    The default behaviour is to redirect the user to the login page, thus using the current 
+    application state.
+    
+    Application might prevent this by defining an asynchronous 
+    ``popupFailedHandler``. The popup handler might:
+    
+      * notify the user that this happened, give him guidance how to set the
+        browser and display ``login`` button again, calling ``$auth.login()``
+        and return its result 
+      * or return ``REDIRECT_LOGIN`` to signalize that the library should
+        perform redirection to the login page: 
+          * The current window is redirected to `loginUrl?next=completeUrl` as 
+            in the previous case
+          * When the login process is finished, `completeUrl` is called. This is
+            always in the form of `completeUrl?next=<vue page where the login started>`.
+            If this argument is present, the page should not perform channel-based
+            notification (as there is no opener to listen for the notification) but
+            should redirect the browser to the target page
+          * The vue page is loaded and should call (for example in App or route
+            guard)  ``api.check()`` that synchronizes the logging state in Vue app
+            with that on the server
       
   * User can not log in and sticks on the login page. Both pages are open
     and user must close them both. There is currently no timeout implemented
     for the login process.
     
-  * User has logged in but the library failed to close the window (again, 
-    add blocker or similar blocking library). The ``completeUrl`` page should
-    inform the user that something is not right and ask him to close the page.
-    After closing the user should be logged in.
+  * User has logged in but the library failed to close the window (for example,
+    add blocker or browser settings prevent it). The ``completeUrl`` page should
+    inform the user (after a couple of seconds) that something is not right and 
+    ask him to close the page. After returning to the app the user should be logged in.
     
 ### Login-required route guards
 
@@ -133,9 +140,11 @@ Unfortunately we can not initiate the popup login at this moment - too much
 time and javascript calls have passed between the time user clicked on 
 the link and route guard was triggered and this would cause the popup be blocked.
 
-Because of that application can register a ``loginRequiredNotifier`` that should
+Because of that application can register a ``loginRequiredHandler`` that should
 display that login is required and provide a ``login`` button
-on which the user would click.
+on which the user would click. The click handler should call $auth.login and its
+result should be returned as the result of loginRequiredHandler. A sample implementation
+is in the sections below.
 
 ### Unauthorized guards
 
@@ -144,12 +153,12 @@ only editors can get in. If a user does not have editor role, we should inform
 him and give him opportunity to log out / log in as someone else (or switch roles
 if application allows that).
 
-For a cases like this a ``noAccessNotifier`` can be configured that is called
+For a cases like this a ``noAccessHandler`` can be configured that is called
 and decides whether to ask for login, continue with the navigation or prevent it. 
 
 ## Configuration
 
-```javascript
+```typescript
 import Vue from 'vue'
 import router from './router'
 
@@ -168,9 +177,9 @@ Vue.use(PopupLogin, {
     stateUrl?: string;
     nextQueryParam?: string;
     loginStateTransformer?: LoginStateTransformer<UserAuthenticationState>;
-    popupFailedNotifier?: PopupFailedNotifier;
-    loginRequiredNotifier?: LoginRequiredNotifier;
-    noAccessNotifier?: NoAccessNotifier;    
+    popupFailedHandler?: PopupFailedHandler;
+    loginRequiredHandler?: LoginRequiredHandler;
+    noAccessHandler?: NoAccessHandler;    
 })
 ```
 
@@ -213,18 +222,22 @@ domain as the Vue application and must:
   
 ```html
 <script>
-const bc = new BroadcastChannel('popup-login-channel');
-bc.postMessage({
-    type: "login",
-    status: "success",  // "or error"
-    message: "Sample ok/error message from the auth server"
-})
-// after this message vue frontend will close the window.
-// if it does not happen:
-setTimeout(() => {
-    alert(`Could not send login data back to the application. 
-           Please close this window manually and reload the application`)
-}, 5000)  
+if (window.location.query.next) {
+   window.location.href = window.location.query.next
+} else {
+    const bc = new BroadcastChannel('popup-login-channel');
+    bc.postMessage({
+        type: "login",
+        status: "success",  // "or error"
+        message: "Sample ok/error message from the auth server"
+    })
+    // after this message vue frontend will close the window.
+    // if it does not happen:
+    setTimeout(() => {
+        alert(`Could not send login data back to the application. 
+               Please close this window manually and reload the application`)
+    }, 5000)  
+}
 </script>
 ```
 
@@ -240,7 +253,7 @@ popup and login via same page redirection.
 A url implemented by the server that provides login status. It should support
 HTTP GET method and preferably return:
 
-```json
+```json5
 {
     "loggedIn": "true",
     "needsProvided": ["viewer", "editor", {
@@ -248,6 +261,7 @@ HTTP GET method and preferably return:
          "departments": [110, 115]
        }
     }]
+    // any other metadata that server wants to return (for example user name, etc) 
 }
 ```    
 
@@ -258,14 +272,13 @@ See "Authorization" section below for the description of needs.
 Default: identity function
 
 If ``stateUrl`` above does not return the representation required, this function
-has to be provided to convert the response to ``{"loggedIn", "needsProvided"}``
-structure.
+has to be provided to convert the response to the format above.
 
-### ``popupFailedNotifier``
+### ``popupFailedHandler``
 
 ``function (): Promise<boolean>``
 
-When pop-ups are blocked, this async notifier should create an in-page popup 
+When pop-ups are blocked, this async handler should create an in-page popup 
 and direct user what to do. It promises to return ``true`` if redirection-based
 login should be performed or ``false`` if it handled the situation and user is
 being logged in.
@@ -277,43 +290,53 @@ The function should explain the situation and suggest the user:
     resolving to true. This will cause immediate redirection to the login url 
     with the consequence that data entered on the page will be lost.
 
-### ``loginRequiredNotifier``
+See the implementation details below for a sample implementation.
+
+### ``loginRequiredHandler``
 
 ``function (extra: { [key: string]: any }) 
-    => Promise<boolean | string | Location>``
+    => Promise<REDIRECT_LOGIN | boolean | CANCEL_NAVIGATION | CONTINUE_NAVIGATION | Location>``
 
-This notifier is called from route guard when login is required and user is not
-logged in. The notifier should normally display a popup explaining the situation
-and a button "Log in". When the button is clicked, ``usePopupLogin().login()``
-should be called as soon as possible and Promise.resolve(true) returned.
-
-Alternatively the notifier may return eiter a string and the browser will
-be redirected to this url (bypassing the router) or it can return router
-Location (that is, ``{name:'blah', ...}``) and router will be navigated to
-this url instead. 
-
-### noAccessNotifier
-
-``function (state: AuthenticationState, extra: { [key: string]: any }) 
-     => Promise<boolean | string | Location>``
-
-A route guard may perform permission checks. If these checks fail and user
-is logged in, noAccessNotifier is called.
+This handler is called from route guard when login is required and user is not
+logged in. 
 
 The ``extra`` parameter contains prop ``route`` with the target route where
 the user wants to navigate.
 
-A sane implementation is to show the user that he has no rights to continue
-and either Promise.reject(false) that will prevent the navigation or 
-return a redirection url to log the user out.
+The handler should normally display a popup explaining the situation
+and a button to "Log in". When the button is clicked, ``usePopupLogin().login()``
+should be called as soon as possible and its return value returned.
 
-Promise.resolve(true) might be returned as well - in this case the notifier
-must clear any internal state of the application (as user is going 
-to logout/login as someone else or select a different role), and initiate 
-login via ``.login`` method on the api. 
+Alternatively the handler may return:
+ * ``REDIRECT_LOGIN`` constant to start redirection-based login
+ * ``CANCEL_NAVIGATION`` to cancel the navigation and stay on the same page
+ * ``CONTINUE_NAVIGATION`` to bypass the login process and allow non-authenticated user to continue to the target page
+ * router ``Location`` to navigate to this page instead
+
+### ``noAccessHandler``
+
+``function (state: AuthenticationState, extra: { [key: string]: any }) 
+     => Promise<REDIRECT_LOGIN | boolean | CANCEL_NAVIGATION | CONTINUE_NAVIGATION | Location>``
+
+A route guard may perform permission checks. If these checks fail for a logged-in user, noAccessHandler is called.
+
+The ``extra`` parameter contains prop ``route`` with the target route where
+the user wants to navigate.
+
+A sane implementation is to show the user that he has no rights to continue and:
+  1. log the user out and initiate new login via ``usePopupLogin().login()``
+    and returning its return value
+  2. logout user and return``REDIRECT_LOGIN`` constant to start redirection-based login
+  3. return ``CANCEL_NAVIGATION`` to cancel the navigation and stay on the same page
+  4. return ``CONTINUE_NAVIGATION`` to bypass the authorization process and allow non-authorized
+    user to continue to the target page
+  5. return router ``Location`` to navigate to this page instead
  
-For security reasons we do not suggest this as you risk that parts of the
-internal state might not be cleared (in libraries etc). 
+For security reasons the first alternative is highly discouraged unless you really know what
+you are doing. Your application might contain state dependent on logged-in user which in case
+you forget to clear might bring inconsistencies and unexpected application crashes. 
+
+Alternatives 2, 3, 5 or setting ``window.location.href`` directly are much safer alternatives.
 
 ## Access rights
 
@@ -324,22 +347,22 @@ The application provides a ``needsRequired`` array and user has associated
 ``needsProvided`` array.
 
 To evaluate the rights, the library iterates ``needsRequired`` array and checks
-if any of those match ``needsProvided``. If so, the user is allowed the access.
+if any of those match ``needsProvided``. If so, the access is allowed.
 
 The matching process of the need:
    * if the need is a simple string, ``needsProvided`` are searched for the same
-     string. If found, access allowed
+     string. If found, access allowed,
    * if the need is a function, it is executed with 
         ``(state: UserAuthenticationState, 
-           providedNeeds: Need[], 
-           extra: any)`` and should return true if access allowed
+           needsProvided: Need[], 
+           extra: any)`` and should return true if access allowed,
    * if the need is an object/array, it is checked if it is contained
    (overlaps) in any of the needsProvided. See ``lodash.isMatch`` for 
    details about the comparison.
  
 ## Usage
 
-### Login/logout button
+### Login/logout button and login state
 
 ```html
 <button @click="$auth.logout" v-if="loggedIn">Log out</button>
@@ -355,6 +378,11 @@ The matching process of the need:
 ```
 
 Or, in composition api:
+
+```html
+<button @click="logout" v-if="loggedIn">Log out</button>
+<button @click="login" v-else>Log in</button>
+```
 
 ```javascript
 setup(props, ctx) {
@@ -436,63 +464,65 @@ this.$auth.hasAccess(needsRequired, extra)
 
 ```
 
-### Implementing popup failed notifier
+### Implementing popup failed handler
 
 The exact implementation of the popup failed
-notifier depends on the framework you are using.
+handler depends on the framework you are using.
 
 For example, in quasar you can use ``BottomSheet`` plugin:
 
 ```javascript
-function popupFailedNotifier() {
-     return new Promise((resolve) => {
-         BottomSheet.create({ 
-             message: 'Could not log you in because you have popup windows disabled for this site. ....',
-             actions: [{
-                 label: 'Try again',
-                 img: '/img/login.png',
-                 id: 'again'
-             },{
-                 label: 'Leave the page to log in',
-                 img: '/img/login.png',
-                 id: 'redirect'
-             }]
-          }).onOk(action => {
-              resolve(action === 'redirect')
-          })
-     })
-}
+api.options.popupFailedNotifier = function () {
+      return new Promise((resolve) => {
+        BottomSheet.create({
+          message: 'Could not log you in because your browser prevents popup windows',
+          actions: [
+            {
+              label: 'Try again',
+              icon: 'vpn_key',
+              id: 'again'
+            },
+            {
+              label: 'Leave this page and log in via your login server',
+              icon: 'login',
+              id: 'redirect'
+            }]
+        }).onOk(action => {
+          resolve(action === 'redirect')
+        })
+      })
+    }
 ```
 
 See [App.vue](src/App.vue) for Vuetify example.
 
-### Implementing login required notifier
+### Implementing login required handler
 
 Again depends on the framework. In quasar:
 
 ```javascript
-function loginRequiredNotifier() {
-    const auth = usePopupLogin()
-    return new Promise((resolve) => {
-        BottomSheet.create({ 
-            message: 'Authentication required. Click on the button below to log in.',
-            actions: [{
-                label: 'Log in',
-                img: '/img/login.png',
-                id: 'log in'
-            }]
-         }).onOk(() => {
-             auth.login()
-             resolve(true)
-         })
+api.options.loginRequiredNotifier = function () {
+  return new Promise((resolve) => {
+    BottomSheet.create({
+      message: 'Authentication required. Click on the button below to log in.',
+      actions: [{
+        label: 'Log in',
+        icon: 'vpn_key',
+        id: 'log in'
+      }]
+    }).onOk(() => {
+      api.login()
+      resolve(true)
     })
+  })
 }
 ```
 
 See [App.vue](src/App.vue) for Vuetify example.
 
-### Implementing no access notifier
+### Implementing no access handler
 
-This notifier should normally never be called because application should not 
+This handler should normally never be called because application should not 
 show links to pages user has no access to. A simple alert with redirection
-to the homepage might be enough to handle the case gracefully.
+to the homepage might be enough to handle the case gracefully and has already
+been implemented in the library.

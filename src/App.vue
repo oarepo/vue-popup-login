@@ -76,6 +76,7 @@
 
 <script lang="ts">
 import {defineComponent} from '@vue/composition-api';
+import {REDIRECT_LOGIN} from '@oarepo/vue-composition-popup-login';
 
 export default defineComponent({
   name: 'App',
@@ -84,8 +85,8 @@ export default defineComponent({
     this.$auth.check()
 
     // register notification handler on failed popups
-    this.$auth.options.popupFailedNotifier = () => this.popupFailed()
-    this.$auth.options.loginRequiredNotifier = () => this.noAccess()
+    this.$auth.options.popupFailedHandler = () => this.popupFailed()
+    this.$auth.options.loginRequiredHandler = () => this.noAccess()
   },
   data: function() {
     return {
@@ -106,13 +107,13 @@ export default defineComponent({
     retry() {
       if (this.resolveFailedPopup !== null) {
         this.popupFailedSnackbar = false
-        this.$auth.login().then(() => {this.resolveFailedPopup(false)})
+        this.resolveFailedPopup(this.$auth.login())
       }
     },
     redirect() {
       if (this.resolveFailedPopup !== null) {
         this.popupFailedSnackbar = false
-        this.resolveFailedPopup(true)
+        this.resolveFailedPopup(REDIRECT_LOGIN)
       }
     },
     noAccess() {
@@ -124,15 +125,9 @@ export default defineComponent({
     logInAgain() {
       // log in as early as possible
       console.log('logInAgain called')
-      this.$auth.login().then(() => {
-        if (this.resolveNoAccess !== null) {
-          this.noAccessSnackbar = false
-          console.log('resolveNoAccess true')
-          this.resolveNoAccess(true)
-        }
-      })
-
-    },
+      this.noAccessSnackbar = false
+      this.resolveNoAccess(this.$auth.login())
+    }
   }
 })
 </script>

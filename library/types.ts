@@ -36,12 +36,20 @@ export interface RouteMeta<UserAuthenticationState extends AuthenticationState> 
     authorization?: AuthorizationNeeds<UserAuthenticationState>;
 }
 
+export const REDIRECT_LOGIN = Symbol('redirect-login')
+export const CANCEL_NAVIGATION = Symbol('cancel-navigation')
+export const CONTINUE_NAVIGATION = Symbol('continue-navigation')
+
+export type LoginOutcome = typeof REDIRECT_LOGIN | boolean
+export type NavigationOutcome = typeof CANCEL_NAVIGATION | typeof CONTINUE_NAVIGATION | Location
+
 /**
  * raised when login popup could not be created
  *
- * @returns  true if it is ok to perform redirection-based authentication
+ * @returns  a response from this api.login() (user clicked on login button, api.login() has been called)
+ * @returns  REPEAT_LOGIN if user clicked on the login button and a new popup login has started
  */
-export type PopupFailedNotifier = () => Promise<boolean>
+export type PopupFailedHandler = () => Promise<boolean | typeof REDIRECT_LOGIN>
 
 /**
  * Called when user needs to access a protected resource (for example, in route navigation) and is not
@@ -50,10 +58,13 @@ export type PopupFailedNotifier = () => Promise<boolean>
  * @param extra any extra parameters supplied by the called. In case of router transition, this parameter
  *        will contain 'oldRoute' and 'newRoute' values
  *
- * @return true if user clicked on login button, string to use it as window.location or Location to be used
- *        for router.push()
+ * @returns  a response from this api.login() (user clicked on login button, api.login() has been called)
+ * @returns  REDIRECT_LOGIN if user wants to log in via redirect
+ * @returns  CANCEL_NAVIGATION do not allow the navigation, call next(false) in route guard
+ * @returns  CONTINUE_NAVIGATION the login information has been acquired outside of the library, it is ok to continue
+ * @returns  Location navigate router to this location
  */
-export type LoginRequiredNotifier = (extra: { [key: string]: any }) => Promise<boolean | string | Location>
+export type LoginRequiredHandler = (extra: { [key: string]: any }) => Promise<LoginOutcome | NavigationOutcome >
 
 /**
  * Called when user needs to access a protected resource (for example, in route navigation) and has no
@@ -63,10 +74,14 @@ export type LoginRequiredNotifier = (extra: { [key: string]: any }) => Promise<b
  * @param extra any extra parameters supplied by the called. In case of router transition, this parameter
  *        will contain 'oldRoute' and 'newRoute' values
  *
- * @return true if user clicked on login button, string to use it as window.location or Location to be used
- *        for router.push()
+ * @returns  a response from this api.login() (user was logged out, clicked on login button, api.login() has been called)
+ * @returns  REDIRECT_LOGIN if user was logged out and wants to log in via redirect
+ * @returns  CANCEL_NAVIGATION do not allow the navigation, call next(false) in route guard
+ * @returns  CONTINUE_NAVIGATION a new login information has been acquired outside of the library, it is ok to continue
+ * @returns  Location navigate router to this location
  */
-export type NoAccessNotifier = (state: AuthenticationState, extra: { [key: string]: any }) => Promise<boolean | string | Location>
+export type NoAccessHandler = (state: AuthenticationState, extra: { [key: string]: any }) => Promise<
+    LoginOutcome | NavigationOutcome>
 
 /**
  * Transforms login state received from the server into a LoginState interface
@@ -110,29 +125,38 @@ export interface UsePopupLoginOptions<UserAuthenticationState extends Authentica
      */
     loginStateTransformer: LoginStateTransformer<UserAuthenticationState>;
     /**
-     * When pop-ups are blocked, this async notifier should create an in-page popup and direct user what to do -
+     * When pop-ups are blocked, this async handler should create an in-page popup and direct user what to do -
      *  * either suggest user to enable popups, show a button calling usePopupLogin().login()
-     *    function and return Promise resolving to false
-     *  * or return Promise resolving to true. This will cause immediate redirection to the login url and
-     *    data entered on the page will be lost
+     *    function and return its result
+     *  * return REDIRECT_LOGIN constant to log in via browser location redirection
      */
-    popupFailedNotifier: PopupFailedNotifier;
+    popupFailedHandler: PopupFailedHandler;
     /**
-     * When an access is checked (for example, in routes), this async notifier will be called when user is not logged in.
-     * The notifier should display a message and a button "login" that calls usePopupLogin().login()
+     * When an access is checked (for example, in routes), this async handler will be called when user is not logged in.
+     * The handler should display a message and a button "login" that calls usePopupLogin().login()
      *
-     * The notifier returns either a Promise resolving to true, meaning that user is logging in in the popup,
-     * or a Route or URL to which the user should be navigated instead
+     * The handler returns:
+     *
+     *  * a response from this api.login() (user clicked on login button, api.login() has been called)
+     *  * REDIRECT_LOGIN if user wants to log in via redirect
+     *  * CANCEL_NAVIGATION do not allow the navigation, call next(false) in route guard
+     *  * CONTINUE_NAVIGATION the login information has been acquired outside of the library, it is ok to continue
+     *  * Location navigate router to this location
      */
-    loginRequiredNotifier: LoginRequiredNotifier;
+    loginRequiredHandler: LoginRequiredHandler;
     /**
-     * When an access is checked (for example, in routes), this async notifier will be called when user has no rights.
-     * The notifier should display a message and offer a logout/login.
+     * When an access is checked (for example, in routes), this async handler will be called when user has no rights.
+     * The handler should display a message and offer a logout/login.
      *
-     * The notifier returns either a Promise resolving to true, meaning that user is logging in in the popup,
-     * or a Route or URL to which the user should be navigated instead
+     * The handler returns:
+     *
+     *  * a response from this api.login() (user was logged out, clicked on login button, api.login() has been called)
+     *  * REDIRECT_LOGIN if user was logged out and wants to log in via redirect
+     *  * CANCEL_NAVIGATION do not allow the navigation, call next(false) in route guard
+     *  * CONTINUE_NAVIGATION a new login information has been acquired outside of the library, it is ok to continue
+     *  * Location navigate router to this location
      */
-    noAccessNotifier: NoAccessNotifier;
+    noAccessHandler: NoAccessHandler;
 }
 
 /**

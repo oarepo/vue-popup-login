@@ -3,13 +3,18 @@ import {normalizeUrl} from './url';
 import {reactive, Ref, ref} from '@vue/composition-api';
 import {
     AuthenticationState,
+    CANCEL_NAVIGATION,
+    CONTINUE_NAVIGATION,
     LoginMessage,
-    LoginRequiredNotifier,
+    LoginOutcome,
+    LoginRequiredHandler,
     LoginStateTransformer,
+    NavigationOutcome,
     Need,
-    NoAccessNotifier,
-    PopupFailedNotifier,
+    NoAccessHandler,
+    PopupFailedHandler,
     PopupLoginPluginOptions,
+    REDIRECT_LOGIN,
     UsePopupLoginOptions
 } from './types';
 import axios from 'axios'
@@ -22,6 +27,7 @@ const DEFAULT_COMPLETE_URL = '/auth/complete';
 const DEFAULT_LOGOUT_URL = '/auth/logout';
 const DEFAULT_STATE_URL = '/auth/state';
 const DEFAULT_NEXT_QUERY_PARAM = 'next'
+
 
 // @vue/composition-api must be initialized so can not have the reactive property here
 // (as the file might be imported before Vue.use(CompositionApi) )
@@ -46,10 +52,12 @@ const pluginData = {
  * @param stateUrl
  * @param nextQueryParam
  * @param loginStateTransformer
- * @param popupFailedNotifier
+ * @param popupFailedHandler
  */
 export function usePopupLogin<UserAuthenticationState extends AuthenticationState>(
-    {
+    options?: UsePopupLoginOptions<UserAuthenticationState>) {
+
+    const {
         loginUrl,
         logoutUrl,
         completeUrl,
@@ -57,10 +65,11 @@ export function usePopupLogin<UserAuthenticationState extends AuthenticationStat
         stateUrl,
         nextQueryParam,
         loginStateTransformer,
-        popupFailedNotifier,
-        loginRequiredNotifier,
-        noAccessNotifier
-    }: UsePopupLoginOptions<UserAuthenticationState>) {
+        popupFailedHandler,
+        loginRequiredHandler,
+        noAccessHandler
+    } = options || {}
+
     if (pluginData.loginOptions === null) {
         Object.assign(pluginData, {
             loginOptions: reactive({
@@ -71,9 +80,9 @@ export function usePopupLogin<UserAuthenticationState extends AuthenticationStat
                 stateUrl: null as any as string,
                 nextQueryParam: null as any as string,
                 loginStateTransformer: null as (LoginStateTransformer<AuthenticationState> | null),
-                popupFailedNotifier: null as any as PopupFailedNotifier,
-                loginRequiredNotifier: null as any as LoginRequiredNotifier,
-                noAccessNotifier: null as any as NoAccessNotifier
+                popupFailedHandler: null as any as PopupFailedHandler,
+                loginRequiredHandler: null as any as LoginRequiredHandler,
+                noAccessHandler: null as any as NoAccessHandler
             }),
 
             loginData: reactive({
@@ -93,76 +102,89 @@ export function usePopupLogin<UserAuthenticationState extends AuthenticationStat
         stateUrl: string;
         nextQueryParam: string;
         loginStateTransformer: LoginStateTransformer<UserAuthenticationState>;
-        popupFailedNotifier: PopupFailedNotifier;
-        loginRequiredNotifier: LoginRequiredNotifier;
-        noAccessNotifier: NoAccessNotifier;
+        popupFailedHandler: PopupFailedHandler;
+        loginRequiredHandler: LoginRequiredHandler;
+        noAccessHandler: NoAccessHandler;
     }
     const loginState = pluginData.loginState! as Ref<UserAuthenticationState>  // eslint-disable-line
     const loginData = pluginData.loginData! as {  // eslint-disable-line
         channel: any;
-        promises: Array<(msg: LoginMessage) => void>;
+        callback: ((msg: LoginMessage) => void) | undefined;
         popup: any | null;
     }
 
+    function callCallback(msg: LoginMessage) {
+        if (loginData.callback) {
+            const callback = loginData.callback
+            loginData.callback = undefined
+            callback(msg)
+        } else {
+            setTimeout(() => callCallback(msg), 1000)
+        }
+    }
+
     if (!loginOptions.loginUrl) {
+        // not yet initialized
         loginOptions.loginUrl = loginUrl || DEFAULT_LOGIN_URL
         loginOptions.logoutUrl = logoutUrl || DEFAULT_LOGOUT_URL
         loginOptions.completeUrl = completeUrl || DEFAULT_COMPLETE_URL
         loginOptions.redirectionCompleteUrl = redirectionCompleteUrl || null
         loginOptions.stateUrl = stateUrl || DEFAULT_STATE_URL
         loginOptions.nextQueryParam = nextQueryParam || DEFAULT_NEXT_QUERY_PARAM
-        loginOptions.loginStateTransformer = loginStateTransformer
-        loginOptions.loginRequiredNotifier = loginRequiredNotifier
-        loginOptions.popupFailedNotifier = popupFailedNotifier || (
+        loginOptions.loginStateTransformer = loginStateTransformer as any as LoginStateTransformer<UserAuthenticationState>
+        loginOptions.loginRequiredHandler = loginRequiredHandler || (
             async () => {
-                console.error('Could not create login popup window')
-                return true
+                alert('Redirecting you to log in')
+                return REDIRECT_LOGIN
             }
         )
-        loginOptions.noAccessNotifier = noAccessNotifier || (
+        loginOptions.popupFailedHandler = popupFailedHandler || (
             async () => {
-                console.error('No access')
-                return false
+                alert('Redirecting you to log in')
+                return REDIRECT_LOGIN
+            }
+        )
+        loginOptions.noAccessHandler = noAccessHandler || (
+            async () => {
+                alert('You have no access to the resource. Redirecting you to log in')
+                window.location.href = loginOptions.logoutUrl
+                return false    // just to make typescript happy
             }
         )
         loginData.channel = new BroadcastChannel('popup-login-channel');
 
         loginData.channel.onmessage = function(msg: any) {
             if (msg.data.type === 'login') {
-                const promises = loginData.promises
-                loginData.promises = [] as Array<(msg: LoginMessage) => void>
-
-                (async function notify() {
-                    for (const p of promises) {
-                        await p(msg.data)
-                    }
-                })()
+                callCallback(msg.data)
                 loginData.popup.close()
                 loginData.popup = null
             }
         }
     }
 
-    function _handleFailedLoginPopup(reject: (reason?: any) => void) {
-        loginOptions.popupFailedNotifier().then((redirectionOk) => {
-            if (!redirectionOk) {
-                reject('Could not open popup window and redirection has not been allowed. ' +
-                    'The user might have though fixed the problem and invoked another login ' +
-                    'so this message might in most cases be ignored.')
-            } else {
-                const finalRedirectionUrl = new URL(loginOptions.completeUrl, window.location.href)
-                finalRedirectionUrl.searchParams.append(
-                    loginOptions.nextQueryParam,
-                    loginOptions.redirectionCompleteUrl
-                        ? normalizeUrl(loginOptions.redirectionCompleteUrl)
-                        : window.location.href)
+    function redirectLogin() {
+        const finalRedirectionUrl = new URL(loginOptions.completeUrl, window.location.href)
+        finalRedirectionUrl.searchParams.append(
+            loginOptions.nextQueryParam,
+            loginOptions.redirectionCompleteUrl
+                ? normalizeUrl(loginOptions.redirectionCompleteUrl)
+                : window.location.href)
 
-                const redirectionUrl = new URL(loginOptions.loginUrl, window.location.href)
-                redirectionUrl.searchParams.append(
-                    loginOptions.nextQueryParam,
-                    finalRedirectionUrl.toString())
-                window.location.href = redirectionUrl.toString()
+        const redirectionUrl = new URL(loginOptions.loginUrl, window.location.href)
+        redirectionUrl.searchParams.append(
+            loginOptions.nextQueryParam,
+            finalRedirectionUrl.toString())
+        window.location.href = redirectionUrl.toString()
+    }
+
+    function _handleFailedLoginPopup(resolve: (state: boolean) => void) {
+        loginOptions.popupFailedHandler().then((state) => {
+            if (state === REDIRECT_LOGIN) {
+                redirectLogin()
                 // no need to finish the promise as we are leaving the page
+            } else {
+                // got login, so resolve with it
+                resolve(state)
             }
         })
     }
@@ -186,19 +208,21 @@ export function usePopupLogin<UserAuthenticationState extends AuthenticationStat
     }
 
     function login(): Promise<boolean> {
-        // popup the login as soon as possible - that's why the function is not async
-        clearLoginState()
+        if (loginState.value.loggedIn) {
+            return Promise.resolve(true)
+        }
 
+        // popup the login as soon as possible - that's why the function is not async
         const loginUrl = new URL(loginOptions.loginUrl, window.location.href)
         loginUrl.searchParams.append(loginOptions.nextQueryParam, normalizeUrl(loginOptions.completeUrl))
         const currentPopup = window.open(loginUrl.toString(), '_blank')
         loginData.popup = currentPopup
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             if (!currentPopup) {
-                return _handleFailedLoginPopup(reject);
+                return _handleFailedLoginPopup(resolve);
             }
-            loginData.promises.splice(0, 0, () => check())
-            loginData.promises.push((/*msg: LoginMessage*/) => {
+            loginData.callback = (async () => {
+                await check(false)
                 resolve(loginState.value.loggedIn)
             })
         })
@@ -209,45 +233,32 @@ export function usePopupLogin<UserAuthenticationState extends AuthenticationStat
     }
 
     /**
-     * Ask the loginRequiredNotifier to show login popup
+     * Ask the loginRequiredHandler to show login popup
      *
-     * @param extra extra arguments for the notifier
-     * @return true if user is logging in
-     * @throws false to cancel the navigation
-     * @throws {string} asking the caller to navigate to this url
-     * @throws {Location} asking the caller to router-navigate to this location
+     * @returns  REPEAT_LOGIN if user clicked on the login button and a new popup login has started
+     * @returns  REDIRECT_LOGIN if user wants to log in via redirect
+     * @returns  CANCEL_NAVIGATION do not allow the navigation, call next(false) in route guard
+     * @returns  CONTINUE_NAVIGATION the login information has been acquired outside of the library, it is ok to continue
+     * @returns  {string} navigate browser to this location via windows.location.href - this will reload the app
+     * @returns  Location navigate router to this location
      */
-    function showLoginPopup(extra: any): Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            loginOptions.loginRequiredNotifier(extra).then(resp => {
-                if (resp === true) {
-                    resolve(true)
-                } else {
-                    reject(resp)
-                }
-            })
-        })
+    function showLoginPopup(extra: any): Promise<LoginOutcome | NavigationOutcome> {
+        return loginOptions.loginRequiredHandler(extra)
     }
 
     /**
-     * Ask the noAccessNotifier to show login popup. The notifier should
+     * Ask the noAccessHandler to show login popup. The handler should
      *
-     * @param extra extra arguments for the notifier
-     * @return true if user is logging in
-     * @throws false to cancel the navigation
-     * @throws {string} asking the caller to navigate to this url
-     * @throws {Location} asking the caller to router-navigate to this location
+     * @param extra extra arguments for the handler
+     * @returns  REPEAT_LOGIN if user clicked on the login button and a new popup login has started
+     * @returns  REDIRECT_LOGIN if user wants to log in via redirect
+     * @returns  CANCEL_NAVIGATION do not allow the navigation, call next(false) in route guard
+     * @returns  CONTINUE_NAVIGATION the login information has been acquired outside of the library, it is ok to continue
+     * @returns  {string} navigate browser to this location via windows.location.href - this will reload the app
+     * @returns  Location navigate router to this location
      */
-    function showNoAccessPopup(extra: any): Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            loginOptions.noAccessNotifier(loginState.value, extra).then(resp => {
-                if (resp === true) {
-                    resolve(true)
-                } else {
-                    reject(resp)
-                }
-            })
-        })
+    function showNoAccessPopup(extra: any): Promise<LoginOutcome | NavigationOutcome> {
+        return loginOptions.noAccessHandler(loginState.value, extra)
     }
 
     function isAuthorized(
@@ -305,42 +316,69 @@ export function usePopupLogin<UserAuthenticationState extends AuthenticationStat
      * Makes sure the user is logged in and has the required needs
      *
      * @param needsRequired a list of needs that the user must provide
-     * @param extra extra arguments for login and no access notifiers
+     * @param extra extra arguments for login and no access handlers
      *
      * @return true if user is logged in and provides all the needs required
      *
-     * @throws `false` if user does not want to login in - in this case navigation should be prevented
-     * @throws {string} asking the caller to navigate to this url
+     * @throws CANCEL_NAVIGATION  user has no rights and does not want to continue
+     * @throws CONTINUE_NAVIGATION handler wants to continue navigation even though user has no rights
      * @throws {Location} asking the caller to router-navigate to this location
      */
-    async function loginAndAuthorize(needsRequired: Need<UserAuthenticationState>[], extra: any): Promise<boolean> {
-        const authState = await check(true)
-        if (!authState.loggedIn) {
-            // register on login finished
-            await showLoginPopup(extra)
-            await check(true)
-            if (!loginState.value.loggedIn) {
-                return false
+    async function loginAndAuthorize(needsRequired: Need<UserAuthenticationState>[], extra: any): Promise<boolean | NavigationOutcome> {
+        let state = 'initial'
+        while (true) { // eslint-disable-line
+            switch (state) {
+                case 'initial': {
+                    const authState = await check(true)
+                    if (authState.loggedIn) {
+                        state = 'logged-in'
+                    } else {
+                        state = 'logged-out'
+                    }
+                    break
+                }
+                case 'logged-out': {
+                    const loginPopupOutcome = await showLoginPopup(extra)
+                    if (loginPopupOutcome === true) {
+                        state = 'logged-in'
+                    } else if (loginPopupOutcome === false) {
+                        continue
+                    } else if (loginPopupOutcome === REDIRECT_LOGIN) {
+                        redirectLogin()
+                    } else {
+                        return loginPopupOutcome // navigation outcome
+                    }
+                    break
+                }
+                case 'logged-in': {
+                    const authorized = isAuthorized(loginState.value, needsRequired, loginState.value.needsProvided, extra)
+                    if (authorized) {
+                        return true
+                    }
+                    state = 'not-authorized'
+                    break
+                }
+                case 'not-authorized': {
+                    const loginOutcome = await showNoAccessPopup(extra)
+                    if (loginOutcome === true) {
+                        state = 'logged-in'
+                    } else if (loginOutcome === false) {
+                        state = 'initial'
+                    } else if (loginOutcome == REDIRECT_LOGIN) {
+                        redirectLogin()
+                    } else {
+                        return loginOutcome
+                    }
+                    break
+                }
             }
         }
-        const authorized = isAuthorized(loginState.value, needsRequired, loginState.value.needsProvided, extra)
-        if (!authorized) {
-            const loginInProgress = await showNoAccessPopup(extra)
-            if (loginInProgress) {
-                return new Promise((resolve, reject) => {
-                    loginData.promises.push(() => {
-                        // repeat the authorization when the login is finished
-                        loginAndAuthorize(needsRequired, extra).then(resolve).catch(reject)
-                    })
-                })
-            }
-        }
-        return authorized
     }
 
     return {
         options: loginOptions,
         state: loginState,
+        clearLoginState,
         check,
         login,
         logout,
@@ -370,31 +408,26 @@ export default function popupLoginPlugin<UserAuthenticationState extends Authent
             if (!authorization) {
                 next()
             } else {
-                for (const idx of Array(5).keys()) {
-                    try {
-                        const authorized = await $auth.loginAndAuthorize(
-                            authorization.needsRequired || [],
-                            {
-                                route: to
-                            })
-                        if (authorized) {
-                            next()
-                            break
-                        }
-                    } catch (e) {
-                        if (typeof e === 'string') {
-                            window.location.href = e
-                        } else if (e === false) {
-                            next(false)
-                        } else {
-                            // otherwise it is a router location, navigate to it
-                            next(e)
-                        }
-                        break
-                    }
+                const authorizedOrLocation = await $auth.loginAndAuthorize(
+                    authorization.needsRequired || [],
+                    {
+                        route: to
+                    })
+                if (authorizedOrLocation === true || authorizedOrLocation === CONTINUE_NAVIGATION) {
+                    next()
+                } else if (authorizedOrLocation === CANCEL_NAVIGATION) {
+                    next(false)
+                } else {
+                    // otherwise it is a location
+                    next(authorizedOrLocation)
                 }
-                next(false)
             }
         })
     }
+}
+
+export {
+    REDIRECT_LOGIN,
+    CANCEL_NAVIGATION,
+    CONTINUE_NAVIGATION
 }
