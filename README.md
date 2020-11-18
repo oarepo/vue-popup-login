@@ -472,7 +472,7 @@ handler depends on the framework you are using.
 For example, in quasar you can use ``BottomSheet`` plugin (set it inside App's setup to make sure everything is loaded):
 
 ```javascript
-api.options.popupFailedHandler = function () {
+api.registerPopupFailedHandler(() => {
   return new Promise((resolve) => {
     BottomSheet.create({
       message: 'Could not log you in because your browser prevents popup windows',
@@ -488,14 +488,14 @@ api.options.popupFailedHandler = function () {
           id: 'redirect'
         }]
     }).onOk(action => {
-      if (action === 'again') {
+      if (action.id === 'again') {
         resolve(api.login())
       } else {
         resolve(REDIRECT_LOGIN)
       }
     })
   })
-}
+})
 ```
 
 See [App.vue](src/App.vue) for Vuetify example.
@@ -505,7 +505,7 @@ See [App.vue](src/App.vue) for Vuetify example.
 Again depends on the framework. In quasar (set it inside App's setup to make sure everything is loaded):
 
 ```javascript
-api.options.loginRequiredHandler = function () {
+api.registerLoginRequiredHandler(() => {
   return new Promise((resolve) => {
     BottomSheet.create({
       message: 'Authentication required. Click on the button below to log in.',
@@ -518,7 +518,7 @@ api.options.loginRequiredHandler = function () {
       resolve(api.login())
     })
   })
-}
+})
 ```
 
 See [App.vue](src/App.vue) for Vuetify example.
@@ -529,3 +529,11 @@ This handler should normally never be called because application should not
 show links to pages user has no access to. A simple alert with redirection
 to the homepage might be enough to handle the case gracefully and has already
 been implemented in the library.
+
+If you like to use your own implementation, feel free to:
+
+```javascript
+api.registerNoAccessHandler(() => {
+    // ...
+})
+```

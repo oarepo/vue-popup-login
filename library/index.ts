@@ -375,6 +375,17 @@ export function usePopupLogin<UserAuthenticationState extends AuthenticationStat
         }
     }
 
+    function registerPopupFailedHandler(handler: PopupFailedHandler) {
+        options!.popupFailedHandler = handler
+    }
+
+    function registerLoginRequiredHandler(handler: LoginRequiredHandler) {
+        options!.loginRequiredHandler = handler
+    }
+
+    function registerNoAccessHandler(handler: NoAccessHandler) {
+        options!.noAccessHandler = handler
+    }
     return {
         options: loginOptions,
         state: loginState,
@@ -384,7 +395,10 @@ export function usePopupLogin<UserAuthenticationState extends AuthenticationStat
         logout,
         isAuthorized,
         loginAndAuthorize,
-        hasAccess
+        hasAccess,
+        registerPopupFailedHandler,
+        registerLoginRequiredHandler,
+        registerNoAccessHandler
     }
 }
 
