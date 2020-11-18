@@ -172,6 +172,7 @@ Vue.use(PopupLogin, {
     // Other options
     loginUrl?: string;
     logoutUrl?: string;
+    logoutMethod?: 'GET' | 'POST';
     completeUrl?: string;
     redirectionCompleteUrl?: string;
     stateUrl?: string;
@@ -209,6 +210,14 @@ the ``?next`` (or the value of ``nextQueryParam``) argument with a url where
 to redirect the user when logout is completed.
 
 In most cases this page is provided by the login backend.
+
+### ``logoutMethod``
+
+Default: ``'GET'``
+
+HTTP method for logging out. If it is 'GET', browser is redirected to this url.
+If it is ``POST``, browser performs POST request to this url and is redirected to
+'/'.
 
 ### ``completeUrl``
 

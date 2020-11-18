@@ -103,6 +103,10 @@ export interface UsePopupLoginOptions<UserAuthenticationState extends Authentica
      */
     logoutUrl?: string;
     /**
+     * HTTP method for performing logout
+     */
+    logoutMethod?: 'GET' | 'POST';
+    /**
      * A url passed to login as next when the popup opening has been successful. The page at this url
      * must create broadcast channel named 'popup-login-channel' and post LoginMessage
      */

@@ -60,6 +60,7 @@ export function usePopupLogin<UserAuthenticationState extends AuthenticationStat
     const {
         loginUrl,
         logoutUrl,
+        logoutMethod,
         completeUrl,
         redirectionCompleteUrl,
         stateUrl,
@@ -75,6 +76,7 @@ export function usePopupLogin<UserAuthenticationState extends AuthenticationStat
             loginOptions: reactive({
                 loginUrl: null as any as string,
                 logoutUrl: null as any as string,
+                logoutMethod: 'GET',
                 completeUrl: null as any as string,
                 redirectionCompleteUrl: null as (string | null),
                 stateUrl: null as any as string,
@@ -97,6 +99,7 @@ export function usePopupLogin<UserAuthenticationState extends AuthenticationStat
     const loginOptions = pluginData.loginOptions! as {  // eslint-disable-line
         loginUrl: string;
         logoutUrl: string;
+        logoutMethod: 'GET' | 'POST';
         completeUrl: string;
         redirectionCompleteUrl: string | null;
         stateUrl: string;
@@ -127,6 +130,7 @@ export function usePopupLogin<UserAuthenticationState extends AuthenticationStat
         // not yet initialized
         loginOptions.loginUrl = loginUrl || DEFAULT_LOGIN_URL
         loginOptions.logoutUrl = logoutUrl || DEFAULT_LOGOUT_URL
+        loginOptions.logoutMethod = logoutMethod || 'GET'
         loginOptions.completeUrl = completeUrl || DEFAULT_COMPLETE_URL
         loginOptions.redirectionCompleteUrl = redirectionCompleteUrl || null
         loginOptions.stateUrl = stateUrl || DEFAULT_STATE_URL
@@ -229,7 +233,13 @@ export function usePopupLogin<UserAuthenticationState extends AuthenticationStat
     }
 
     function logout() {
-        window.location.href = loginOptions.logoutUrl
+        if (loginOptions.logoutMethod === 'GET') {
+            window.location.href = loginOptions.logoutUrl
+        } else {
+            axios.post(loginOptions.logoutUrl).then(() => {
+                window.location.href = '/'
+            })
+        }
     }
 
     /**
@@ -386,6 +396,7 @@ export function usePopupLogin<UserAuthenticationState extends AuthenticationStat
     function registerNoAccessHandler(handler: NoAccessHandler) {
         options!.noAccessHandler = handler
     }
+
     return {
         options: loginOptions,
         state: loginState,
