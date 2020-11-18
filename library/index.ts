@@ -386,15 +386,15 @@ export function usePopupLogin<UserAuthenticationState extends AuthenticationStat
     }
 
     function registerPopupFailedHandler(handler: PopupFailedHandler) {
-        options!.popupFailedHandler = handler
+        loginOptions.popupFailedHandler = handler
     }
 
     function registerLoginRequiredHandler(handler: LoginRequiredHandler) {
-        options!.loginRequiredHandler = handler
+        loginOptions.loginRequiredHandler = handler
     }
 
     function registerNoAccessHandler(handler: NoAccessHandler) {
-        options!.noAccessHandler = handler
+        loginOptions.noAccessHandler = handler
     }
 
     return {
