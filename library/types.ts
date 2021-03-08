@@ -1,4 +1,4 @@
-import Router, {Location} from 'vue-router';
+import {RouteLocationRaw, Router} from 'vue-router';
 
 /**
  * LoginMessage is passed from popup window back to the caller to notify
@@ -41,7 +41,7 @@ export const CANCEL_NAVIGATION = Symbol('cancel-navigation')
 export const CONTINUE_NAVIGATION = Symbol('continue-navigation')
 
 export type LoginOutcome = typeof REDIRECT_LOGIN | boolean
-export type NavigationOutcome = typeof CANCEL_NAVIGATION | typeof CONTINUE_NAVIGATION | Location
+export type NavigationOutcome = typeof CANCEL_NAVIGATION | typeof CONTINUE_NAVIGATION | RouteLocationRaw
 
 /**
  * raised when login popup could not be created

@@ -21,8 +21,3 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
-
-# python
-.venv
-__pycache__
-*.egg-info

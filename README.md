@@ -7,10 +7,8 @@ user has performed on a page.
 The library is compatible (with appropriate server support) with openid and
 shibboleth authentication. 
 
-The 1.x version and branch uses the plain old Vue 2.0 objects.
-
-The 2.x version depends on vue composition API plugin for Vue 2.0.
-the upcoming 3.x version will be compatible with Vue 3.
+This is 3.x version built for Vue 3 only. Vue-2 compatible version is 
+in the [2.x](https://github.com/oarepo/vue-popup-login/tree/2.x) branch.
 
 <!-- toc -->
 
@@ -45,14 +43,14 @@ the upcoming 3.x version will be compatible with Vue 3.
 
 ## Installation
 ```
-yarn add @oarepo/vue-popup-login@^2.0.0
+yarn add @oarepo/vue-popup-login@^3.0.0
 ```
 
 ## Demo
 
 The demo is in the [src](src) directory. Installation of the plugin is at 
 [main.ts](src/main.ts), usage examples of route guards 
-in [route.ts](src/router/index.ts), application page with protected links
+in [route.ts](src/router/router.ts), application page with protected links
 at [Home.vue](src/views/Home.vue), ui callbacks in [App.vue](src/App.vue).
 
 See the sections below for details. To run the demo:
@@ -159,29 +157,17 @@ and decides whether to ask for login, continue with the navigation or prevent it
 ## Configuration
 
 ```typescript
-import Vue from 'vue'
+import {createApp} from 'vue'
 import router from './router'
 
-import CompositionApi from '@vue/composition-api'
-Vue.use(CompositionApi)
-
 import PopupLogin from '@oarepo/vue-popup-login'
-Vue.use(PopupLogin, {
-    router,
-    
-    // Other options
-    loginUrl?: string;
-    logoutUrl?: string;
-    logoutMethod?: 'GET' | 'POST';
-    completeUrl?: string;
-    redirectionCompleteUrl?: string;
-    stateUrl?: string;
-    nextQueryParam?: string;
-    loginStateTransformer?: LoginStateTransformer<UserAuthenticationState>;
-    popupFailedHandler?: PopupFailedHandler;
-    loginRequiredHandler?: LoginRequiredHandler;
-    noAccessHandler?: NoAccessHandler;    
-})
+createApp(App)
+    .use(router)
+    .use(PopupLogin, {
+        router
+        // rest of the options
+    })
+    .mount('#app')
 ```
 
 ### ``loginUrl``

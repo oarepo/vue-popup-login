@@ -1,6 +1,6 @@
-import _Vue from 'vue';
+import {App} from 'vue';
 import {normalizeUrl} from './url';
-import {reactive, Ref, ref} from '@vue/composition-api';
+import {reactive, Ref, ref} from 'vue';
 import {
     AuthenticationState,
     CANCEL_NAVIGATION,
@@ -28,14 +28,27 @@ const DEFAULT_LOGOUT_URL = '/auth/logout';
 const DEFAULT_STATE_URL = '/auth/state';
 const DEFAULT_NEXT_QUERY_PARAM = 'next'
 
+const loginOptions = reactive({
+    loginUrl: null as any as string,
+    logoutUrl: null as any as string,
+    logoutMethod: 'GET',
+    completeUrl: null as any as string,
+    redirectionCompleteUrl: null as (string | null),
+    stateUrl: null as any as string,
+    nextQueryParam: null as any as string,
+    loginStateTransformer: null as (LoginStateTransformer<AuthenticationState> | null),
+    popupFailedHandler: null as any as PopupFailedHandler,
+    loginRequiredHandler: null as any as LoginRequiredHandler,
+    noAccessHandler: null as any as NoAccessHandler
+})
 
-// @vue/composition-api must be initialized so can not have the reactive property here
-// (as the file might be imported before Vue.use(CompositionApi) )
-const pluginData = {
-    loginOptions: null,
-    loginData: null,
-    loginState: null
-}
+const loginData = reactive({
+    channel: null as any,
+    callback: undefined as (((msg: LoginMessage) => void) | undefined),
+    popup: null as any
+})
+
+const loginState = ref({loggedIn: false, needsProvided: []}) as Ref<AuthenticationState>
 
 /**
  * Provides access to the login state. The first time (in main.js or app's setup)
@@ -70,51 +83,6 @@ export function usePopupLogin<UserAuthenticationState extends AuthenticationStat
         loginRequiredHandler,
         noAccessHandler
     } = options || {}
-
-    if (pluginData.loginOptions === null) {
-        Object.assign(pluginData, {
-            loginOptions: reactive({
-                loginUrl: null as any as string,
-                logoutUrl: null as any as string,
-                logoutMethod: 'GET',
-                completeUrl: null as any as string,
-                redirectionCompleteUrl: null as (string | null),
-                stateUrl: null as any as string,
-                nextQueryParam: null as any as string,
-                loginStateTransformer: null as (LoginStateTransformer<AuthenticationState> | null),
-                popupFailedHandler: null as any as PopupFailedHandler,
-                loginRequiredHandler: null as any as LoginRequiredHandler,
-                noAccessHandler: null as any as NoAccessHandler
-            }),
-
-            loginData: reactive({
-                channel: null as any,
-                promises: [] as Array<(msg: LoginMessage) => void>,
-                popup: null as any
-            }),
-
-            loginState: ref({loggedIn: false, needsProvided: []}) as Ref<UserAuthenticationState>
-        })
-    }
-    const loginOptions = pluginData.loginOptions! as {  // eslint-disable-line
-        loginUrl: string;
-        logoutUrl: string;
-        logoutMethod: 'GET' | 'POST';
-        completeUrl: string;
-        redirectionCompleteUrl: string | null;
-        stateUrl: string;
-        nextQueryParam: string;
-        loginStateTransformer: LoginStateTransformer<UserAuthenticationState>;
-        popupFailedHandler: PopupFailedHandler;
-        loginRequiredHandler: LoginRequiredHandler;
-        noAccessHandler: NoAccessHandler;
-    }
-    const loginState = pluginData.loginState! as Ref<UserAuthenticationState>  // eslint-disable-line
-    const loginData = pluginData.loginData! as {  // eslint-disable-line
-        channel: any;
-        callback: ((msg: LoginMessage) => void) | undefined;
-        popup: any | null;
-    }
 
     function callCallback(msg: LoginMessage) {
         if (loginData.callback) {
@@ -157,7 +125,7 @@ export function usePopupLogin<UserAuthenticationState extends AuthenticationStat
         )
         loginData.channel = new BroadcastChannel('popup-login-channel');
 
-        loginData.channel.onmessage = function(msg: any) {
+        loginData.channel.onmessage = function (msg: any) {
             if (msg.data.type === 'login') {
                 callCallback(msg.data)
                 loginData.popup.close()
@@ -195,13 +163,13 @@ export function usePopupLogin<UserAuthenticationState extends AuthenticationStat
 
     async function check(localStateSufficient = false): Promise<UserAuthenticationState> {
         if (loginState.value.loggedIn && localStateSufficient) {
-            return loginState.value
+            return loginState.value as UserAuthenticationState
         }
         const resp = await axios.get(loginOptions.stateUrl)
         loginState.value = loginOptions.loginStateTransformer
             ? loginOptions.loginStateTransformer(resp.data)
             : resp.data
-        return loginState.value
+        return loginState.value as UserAuthenticationState
     }
 
     function clearLoginState() {
@@ -319,7 +287,7 @@ export function usePopupLogin<UserAuthenticationState extends AuthenticationStat
         if (!loginState.value.loggedIn) {
             return false
         }
-        return isAuthorized(loginState.value, needsRequired, loginState.value.needsProvided, extra)
+        return isAuthorized(loginState.value as UserAuthenticationState, needsRequired, loginState.value.needsProvided, extra)
     }
 
     /**
@@ -361,7 +329,7 @@ export function usePopupLogin<UserAuthenticationState extends AuthenticationStat
                     break
                 }
                 case 'logged-in': {
-                    const authorized = isAuthorized(loginState.value, needsRequired, loginState.value.needsProvided, extra)
+                    const authorized = isAuthorized(loginState.value as UserAuthenticationState, needsRequired, loginState.value.needsProvided, extra)
                     if (authorized) {
                         return true
                     }
@@ -414,20 +382,19 @@ export function usePopupLogin<UserAuthenticationState extends AuthenticationStat
 }
 
 /**
- * Vue plugin. Do not forget to call Vue.use(compositionApi) before
- * using this plugin.
+ * Vue plugin.
  *
- * @param Vue           current Vue
+ * @param app           current Vue
  * @param options       login options
  */
 export default function popupLoginPlugin<UserAuthenticationState extends AuthenticationState>(
-    Vue: typeof _Vue, options: PopupLoginPluginOptions<UserAuthenticationState>
+    app: App, options: PopupLoginPluginOptions<UserAuthenticationState>
 ) {
     const $auth = usePopupLogin(options);
-    Vue.component('authorized-link', AuthorizedLink)
-    Vue.prototype.$auth = $auth
-    if (options.router) {
+    app.component('authorized-link', AuthorizedLink)
+    app.config.globalProperties.$auth = $auth
 
+    if (options.router) {
         options.router.beforeEach(async (to, from, next) => {
             const authorization = getAuthorizationFromRoute(to)
             if (!authorization) {
@@ -440,7 +407,7 @@ export default function popupLoginPlugin<UserAuthenticationState extends Authent
                     })
                 if (authorizedOrLocation === true || authorizedOrLocation === CONTINUE_NAVIGATION) {
                     next()
-                } else if (authorizedOrLocation === CANCEL_NAVIGATION) {
+                } else if (authorizedOrLocation === CANCEL_NAVIGATION || authorizedOrLocation === false) {
                     next(false)
                 } else {
                     // otherwise it is a location
@@ -451,8 +418,4 @@ export default function popupLoginPlugin<UserAuthenticationState extends Authent
     }
 }
 
-export {
-    REDIRECT_LOGIN,
-    CANCEL_NAVIGATION,
-    CONTINUE_NAVIGATION
-}
+export * from './types'
