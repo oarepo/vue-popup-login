@@ -1,133 +1,97 @@
 <template>
-  <v-app>
-    <v-app-bar
-        app
-        color="primary"
-        dark
-    >
-      <div class="d-flex align-center">
-        <v-img
-            alt="Vuetify Logo"
-            class="shrink mr-2"
-            contain
-            src="https://cdn.vuetifyjs.com/images/logos/vuetify-logo-dark.png"
-            transition="scale-transition"
-            width="40"
-        />
-        <h2>Popup Login Demo</h2>
-      </div>
+  <q-layout view="hHh lpR fFf">
+    <q-header elevated class="bg-primary text-white" height-hint="98">
+      <q-toolbar>
+        <q-toolbar-title>
+          <q-avatar>
+            <img src="https://cdn.quasar.dev/logo/svg/quasar-logo.svg">
+          </q-avatar>
+          Popup Login Demo
+        </q-toolbar-title>
 
-      <v-spacer></v-spacer>
+        <q-btn flat
+            href="https://github.com/oarepo/vue-popup-login"
+            target="_blank"
+        >
+          <q-icon name="open_in_new" class="q-pr-sm" size="small"/>
+          Latest Release
+        </q-btn>
 
-      <v-btn
-          href="https://github.com/oarepo/vue-composition-popup-login"
-          target="_blank"
-          text
-      >
-        <span class="mr-2">Latest Release</span>
-        <v-icon>mdi-open-in-new</v-icon>
-      </v-btn>
-    </v-app-bar>
+      </q-toolbar>
+    </q-header>
 
-    <v-main>
-      <v-layout class="pa-8">
-        <router-view></router-view>
-      </v-layout>
-    </v-main>
-    <v-snackbar v-model="popupFailedSnackbar" multi-line :timeout="1e6" color="negative">
-      Opening the popup for logging in has failed.
-      You can either enable popups for this site and
-      try again, or we can take you to login page -
-      but you will loose any changes you might have performed
-      on this page.
+    <q-page-container class="q-ma-xl">
+      <router-view/>
+    </q-page-container>
 
-      <template v-slot:action="{ attrs }">
-      <v-btn
-          color="positive"
-          v-bind="attrs"
-          @click="retry()"
-      >
-        Try again
-      </v-btn>
-      <v-btn
-          color="negative"
-          v-bind="attrs"
-          @click="redirect()"
-      >
-        Go to login page
-      </v-btn>
-      </template>
-    </v-snackbar>
-    <v-snackbar v-model="noAccessSnackbar" multi-line :timeout="1e6" color="negative">
-      You do not have an access to this page. Please log in
-
-      <template v-slot:action="{ attrs }">
-      <v-btn
-          color="positive"
-          v-bind="attrs"
-          @click="logInAgain()"
-      >
-        Log in
-      </v-btn>
-      </template>
-    </v-snackbar>
-  </v-app>
+  </q-layout>
 </template>
 
 <script lang="ts">
-import {defineComponent} from '@vue/composition-api';
-import {REDIRECT_LOGIN} from '@oarepo/vue-composition-popup-login';
+import {defineComponent, ref} from 'vue';
+import {
+  REDIRECT_LOGIN, usePopupLogin,
+} from '@oarepo/vue-popup-login';
+import {useQuasar} from "quasar";
 
 export default defineComponent({
   name: 'App',
-  mounted() {
-    // check if the user is not logged in already
-    this.$auth.check()
+  setup() {
+    const auth = usePopupLogin()
+    const quasar = useQuasar()
 
-    // register notification handler on failed popups
-    this.$auth.options.popupFailedHandler = () => this.popupFailed()
-    this.$auth.options.loginRequiredHandler = () => this.noAccess()
-  },
-  data: function() {
-    return {
-      resolveFailedPopup: null as any,
-      popupFailedSnackbar: false,
+    auth.check()
 
-      resolveNoAccess: null as any,
-      noAccessSnackbar: false
-    }
-  },
-  methods: {
-    popupFailed() {
+    const resolveFailedPopup = ref<any>(null)
+    const resolveNoAccess = ref<any>(null)
+
+    function popupFailed() {
       return new Promise((resolve: any) => {
-        this.popupFailedSnackbar = true
-        this.resolveFailedPopup = resolve
+        resolveFailedPopup.value = resolve
+        popupFailedDialog()
       })
-    },
-    retry() {
-      if (this.resolveFailedPopup !== null) {
-        this.popupFailedSnackbar = false
-        this.resolveFailedPopup(this.$auth.login())
-      }
-    },
-    redirect() {
-      if (this.resolveFailedPopup !== null) {
-        this.popupFailedSnackbar = false
-        this.resolveFailedPopup(REDIRECT_LOGIN)
-      }
-    },
-    noAccess() {
-      return new Promise((resolve: any) => {
-        this.noAccessSnackbar = true
-        this.resolveNoAccess = resolve
-      })
-    },
-    logInAgain() {
-      // log in as early as possible
-      console.log('logInAgain called')
-      this.noAccessSnackbar = false
-      this.resolveNoAccess(this.$auth.login())
     }
+
+    function noAccess() {
+      return new Promise((resolve: any) => {
+        resolveNoAccess.value = resolve
+        popupNoAccessDialog()
+      })
+    }
+
+
+    function popupFailedDialog() {
+      quasar.dialog({
+        ok: 'Retry',
+        cancel: 'Go to login page',
+        title: 'Popup login failed',
+        message: `Opening the popup for logging in has failed.
+      You can either enable popups for this site and
+      try again, or we can take you to login page -
+      but you will loose any changes you might have performed
+      on this page.`
+      }).onOk(() => {
+        // retry
+        resolveFailedPopup.value(auth.login())
+      }).onCancel(() => {
+        // redirect
+        resolveFailedPopup.value(REDIRECT_LOGIN)
+      })
+    }
+
+    function popupNoAccessDialog() {
+      quasar.dialog({
+        ok: 'Log in',
+        title: 'Access denied',
+        message: `You do not have an access to this page. Please log in.`
+      }).onOk(() => {
+        // retry
+        resolveNoAccess.value(auth.login())
+      })
+    }
+
+    auth.options.popupFailedHandler = popupFailed as any
+    auth.options.loginRequiredHandler = noAccess as any
   }
 })
 </script>

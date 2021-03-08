@@ -1,24 +1,42 @@
-import Vue from 'vue'
-import router from './router'
-import vuetify from './plugins/vuetify';
+import './styles/quasar.sass'
+import '@quasar/extras/material-icons/material-icons.css'
 
-import 'roboto-fontface/css/roboto/roboto-fontface.css'
-import '@mdi/font/css/materialdesignicons.css'
+import PopupLogin from '@oarepo/vue-popup-login'
+import {
+    Dialog,
+    QAvatar,
+    QBtn,
+    QDrawer, QFooter,
+    QHeader,
+    QIcon,
+    QLayout, QPage, QPageContainer,
+    QRouteTab,
+    QTabs,
+    QToolbar,
+    QToolbarTitle,
+    Quasar
+} from 'quasar'
 
-Vue.config.productionTip = false
 
-import CompositionApi from '@vue/composition-api'
-Vue.use(CompositionApi)
-
-import PopupLogin from '@oarepo/vue-composition-popup-login'
-Vue.use(PopupLogin, {
-    router
-})
-
-
+import {createApp} from 'vue'
 import App from './App.vue'
-const root = new Vue({
-    router,
-    vuetify,
-    render: h => h(App)
-}).$mount('#app')
+import router from './router'
+
+createApp(App)
+    .use(router)
+    .use(Quasar, {
+        config: {},
+        plugins: {
+            Dialog
+        },
+        components: [
+            QIcon,
+            QLayout, QHeader, QToolbar, QToolbarTitle, QBtn,
+            QAvatar, QTabs, QRouteTab, QDrawer,
+            QPageContainer, QFooter, QPage
+        ],
+    })
+    .use(PopupLogin, {
+        router
+    })
+    .mount('#app')

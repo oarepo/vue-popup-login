@@ -1,5 +1,10 @@
 const path = require('path')
 
+function resolve(...dir) {
+    return path.join(__dirname, ...dir)
+}
+
+
 const state = {
     authState: {
         loggedIn: false
@@ -29,9 +34,20 @@ const people = {
     }
 }
 
+
 module.exports = {
-    configureWebpack(cfg) {
-        cfg.resolve.alias['@oarepo/vue-composition-popup-login'] = path.join(__dirname, 'library/')
+    pluginOptions: {
+        quasar: {
+            importStrategy: 'kebab',
+            rtlSupport: false,
+        }
+    },
+    transpileDependencies: [
+        'quasar'
+    ],
+    chainWebpack: config => {
+        config.resolve.alias
+            .set('@oarepo/vue-popup-login', resolve('library'))
     },
     devServer: {
         https: true,
