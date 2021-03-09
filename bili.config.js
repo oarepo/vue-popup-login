@@ -13,5 +13,7 @@ module.exports = {
     banner: true,
     filename: 'library/index.ts',
     formats: ['es'],
-    plugins: [],
+    plugins: {
+      babel: false
+    },
 };

@@ -1,6 +1,6 @@
 {
   "name": "@oarepo/vue-popup-login",
-  "version": "3.0.0a2",
+  "version": "3.0.0a3",
   "private": false,
   "scripts": {
     "serve": "vue-cli-service serve",
