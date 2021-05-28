@@ -1,6 +1,6 @@
 {
   "name": "@oarepo/vue-popup-login",
-  "version": "3.0.0a3",
+  "version": "3.0.0a4",
   "private": false,
   "scripts": {
     "serve": "vue-cli-service serve",
@@ -14,6 +14,7 @@
     "@quasar/extras": "^1.0.0",
     "@types/lodash": "^4.14.165",
     "axios": "^0.21.0",
+    "broadcastchannel-polyfill": "^1.0.1",
     "core-js": "^3.6.5",
     "lodash": "^4.17.20",
     "qs": "^6.9.4",

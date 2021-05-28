@@ -21,6 +21,7 @@ import axios from 'axios'
 import {isMatch} from 'lodash'
 import AuthorizedLink from './components/authorized-link'
 import {getAuthorizationFromRoute} from './route';
+import 'broadcastchannel-polyfill'
 
 const DEFAULT_LOGIN_URL = '/auth/login';
 const DEFAULT_COMPLETE_URL = '/auth/complete';
