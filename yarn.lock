@@ -11485,10 +11485,10 @@ vue-cli-plugin-quasar@~4.0.0-beta.3:
   dependencies:
     webpack-merge "^5.7.3"
 
-vue-cli-plugin-vuetify@~2.2.2:
-  version "2.2.2"
-  resolved "https://registry.yarnpkg.com/vue-cli-plugin-vuetify/-/vue-cli-plugin-vuetify-2.2.2.tgz#4b29854ad199d811941b8ca894ca34593127e0bf"
-  integrity sha512-e0p9fuc7YDDUjTi8Uw5XNEwfTZmY+5+kZ22k9ZGsWtDOtWt1dW/oZt3aZtSLrhzEPSimkOWNBD7KZOB3fxNEGA==
+vue-cli-plugin-vuetify@~2.4.0:
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/vue-cli-plugin-vuetify/-/vue-cli-plugin-vuetify-2.4.0.tgz#e3eca6a51592a1610b2006296efc31c52981b031"
+  integrity sha512-0gBy6TYeC5ez/Zya4wMLWXFQ+axKCbrZPc6OfOb5eXTLeUHqSTeyqbsqh0e8zxwBv0VJiQXdjyoY73UHhsb17A==
   dependencies:
     null-loader "^3.0.0"
     semver "^7.1.2"
