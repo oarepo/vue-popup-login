@@ -27,4 +27,4 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PASSWORD }}
         run: |
-          ./publish.sh
+          bash publish.sh
