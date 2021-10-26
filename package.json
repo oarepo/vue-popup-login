@@ -11,19 +11,19 @@
   },
   "main": "oarepo-vue-popup-login.esm.js",
   "dependencies": {
-    "@quasar/extras": "^1.0.0",
     "@types/lodash": "^4.14.165",
     "axios": "^0.21.0",
     "broadcastchannel-polyfill": "^1.0.1",
     "core-js": "^3.6.5",
     "lodash": "^4.17.20",
-    "node-jq": "^2.0.0",
     "qs": "^6.9.4",
-    "quasar": "^2.0.0-beta.9",
     "vue": "^3.0.0",
     "vue-router": "^4.0.0-0"
   },
   "devDependencies": {
+    "node-jq": "^2.0.0",
+    "quasar": "^2.0.0-beta.9",
+    "@quasar/extras": "^1.0.0",
     "@quasar/app": "^3.0.0-beta.1",
     "@typescript-eslint/eslint-plugin": "^2.33.0",
     "@typescript-eslint/parser": "^2.33.0",
