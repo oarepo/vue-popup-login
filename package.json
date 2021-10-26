@@ -1,10 +1,10 @@
 {
   "name": "@oarepo/vue-popup-login",
-  "version": "3.0.0a5",
+  "version": "3.0.0a6",
   "private": false,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "rimraf dist; bili -c bili.config.js library/index.ts --plugins.vue --format esm --file-name oarepo-vue-popup-login.esm.js && cpy package.json README.md dist/ && cpy library/types.ts dist --rename=index.d.ts",
+    "build": "rimraf dist; bili -c bili.config.js library/index.ts --plugins.vue --format esm --file-name oarepo-vue-popup-login.esm.js && cpy README.md dist/; jq '. + {\"devDependencies\": .dependencies} | del(.dependencies) | del(.scripts)' <package.json >dist/package.json; cpy library/types.ts dist --rename=index.d.ts",
     "lint": "vue-cli-service lint",
     "demobuild": "vue-cli-service build",
     "toc": "markdown-toc --maxdepth 4 -i README.md"
@@ -17,6 +17,7 @@
     "broadcastchannel-polyfill": "^1.0.1",
     "core-js": "^3.6.5",
     "lodash": "^4.17.20",
+    "node-jq": "^2.0.0",
     "qs": "^6.9.4",
     "quasar": "^2.0.0-beta.9",
     "vue": "^3.0.0",
