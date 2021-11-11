@@ -376,6 +376,7 @@ export function usePopupLogin<UserAuthenticationState extends AuthenticationStat
         isAuthorized,
         loginAndAuthorize,
         hasAccess,
+        showNoAccessPopup,
         registerPopupFailedHandler,
         registerLoginRequiredHandler,
         registerNoAccessHandler
