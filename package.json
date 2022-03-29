@@ -2,6 +2,7 @@
   "name": "@oarepo/vue-popup-login",
   "version": "3.0.0a7",
   "private": false,
+  "license": "MIT",
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "rimraf dist; bili -c bili.config.js library/index.ts --plugins.vue --format esm --file-name oarepo-vue-popup-login.esm.js && cpy README.md dist/; json -e 'this.peerDependencies = this.dependencies; delete this.dependencies; delete this.scripts; delete this.devDependencies' <package.json >dist/package.json; echo 'export * from \"./library/index\"' >dist/index.d.ts; rimraf dist/src",
@@ -21,7 +22,7 @@
     "vue-router": "^4.0.0-0"
   },
   "devDependencies": {
-    "@quasar/app": "^3.0.0-beta.1",
+    "@quasar/app": "^3.3.3",
     "@quasar/extras": "^1.0.0",
     "@typescript-eslint/eslint-plugin": "^2.33.0",
     "@typescript-eslint/parser": "^2.33.0",
