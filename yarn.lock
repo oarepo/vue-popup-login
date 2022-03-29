@@ -10010,7 +10010,7 @@ qs@~6.5.2:
   resolved "https://registry.yarnpkg.com/qs/-/qs-6.5.3.tgz#3aeeffc91967ef6e35c0e488ef46fb296ab76aad"
   integrity sha512-qxXIEh4pCGfHICj1mAJQ2/2XVZkjCDTcEgfoSQxc/fYivUZxTkk7L3bDBJSoNrEzXI17oUO5Dp07ktqE5KzczA==
 
-quasar@^2.0.0-beta.9:
+quasar@^2.6.2:
   version "2.6.2"
   resolved "https://registry.yarnpkg.com/quasar/-/quasar-2.6.2.tgz#57b59ef388c55af2d42fd2bdc19a9508fb74dbdd"
   integrity sha512-/MHiD4GwQ7g2yebAQhJo8JOu434tl0FB5+6QlCY8dua39ViGjJ6sNBLHMru+erWJWxGiRJuvr4VNlzh7Gs5qMQ==
