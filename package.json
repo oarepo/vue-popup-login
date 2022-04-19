@@ -12,7 +12,7 @@
   },
   "main": "oarepo-vue-popup-login.esm.js",
   "dependencies": {
-    "@types/lodash": "^4.14.165",
+    "@types/lodash": "^4.14.182",
     "axios": "^0.26.0",
     "broadcastchannel-polyfill": "^1.0.1",
     "core-js": "^3.6.5",
