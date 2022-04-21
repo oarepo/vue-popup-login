@@ -405,7 +405,8 @@ export default function popupLoginPlugin<UserAuthenticationState extends Authent
                 const authorizedOrLocation = await $auth.loginAndAuthorize(
                     authorization.needsRequired || [],
                     {
-                        route: to
+                        route: to,
+                        auth: $auth
                     })
                 if (authorizedOrLocation === true || authorizedOrLocation === CONTINUE_NAVIGATION) {
                     next()
