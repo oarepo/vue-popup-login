@@ -19,7 +19,7 @@
     "lodash": "^4.17.20",
     "qs": "^6.9.4",
     "vue": "^3.0.0",
-    "vue-router": "^4.0.0-0"
+    "vue-router": "^4.1.4"
   },
   "devDependencies": {
     "@quasar/app-webpack": "^3.4",
