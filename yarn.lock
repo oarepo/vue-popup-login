@@ -2596,12 +2596,12 @@
   dependencies:
     "@vue/cli-shared-utils" "^4.5.17"
 
-"@vue/cli-plugin-router@~5.0.4":
-  version "5.0.4"
-  resolved "https://registry.yarnpkg.com/@vue/cli-plugin-router/-/cli-plugin-router-5.0.4.tgz#d30b20125408d39c7ad19a7f8a4a82aee9e033a9"
-  integrity sha512-lylzCuH3Br0BcTz5IxxSffpyoF9dQ2k4jTdK8QlWrnRanWGw7P9C0kYMr9rohHaXpvAlu6bio392gbNIWpEepg==
+"@vue/cli-plugin-router@~5.0.8":
+  version "5.0.8"
+  resolved "https://registry.yarnpkg.com/@vue/cli-plugin-router/-/cli-plugin-router-5.0.8.tgz#a113ec626f3d4216d20496c42d35533bce9e889f"
+  integrity sha512-Gmv4dsGdAsWPqVijz3Ux2OS2HkMrWi1ENj2cYL75nUeL+Xj5HEstSqdtfZ0b1q9NCce+BFB6QnHfTBXc/fCvMg==
   dependencies:
-    "@vue/cli-shared-utils" "^5.0.4"
+    "@vue/cli-shared-utils" "^5.0.8"
 
 "@vue/cli-plugin-typescript@~5.0.8":
   version "5.0.8"
