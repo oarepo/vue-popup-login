@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@quasar/app-webpack": "^3.4",
-    "@quasar/extras": "^1.0.0",
+    "@quasar/extras": "^1.15.11",
     "@typescript-eslint/eslint-plugin": "^2.33.0",
     "@typescript-eslint/parser": "^2.33.0",
     "@vue/cli-plugin-babel": "~5.0.4",
