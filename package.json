@@ -41,7 +41,7 @@
     "json": "^11.0.0",
     "markdown-toc": "^1.2.0",
     "node-sass": "^8.0.0",
-    "quasar": "^2.6.2",
+    "quasar": "^2.11.6",
     "rimraf": "^3.0.2",
     "rollup-plugin-typescript2": "^0.34.1",
     "rollup-plugin-vue": "^6.0.0",
